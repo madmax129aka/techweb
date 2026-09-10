@@ -16,32 +16,54 @@ export default function QRScanner({ onScan, active = true }) {
 
   useEffect(() => {
     if (!active) return;
+    let cancelled = false;
     const html5QrCode = new Html5Qrcode(SCANNER_ELEMENT_ID);
     scannerRef.current = html5QrCode;
 
+    const config = { fps: 10, qrbox: { width: 240, height: 240 } };
+    const onSuccess = (decodedText) => {
+      if (pausedRef.current) return;
+      pausedRef.current = true;
+      onScan(decodedText);
+      setTimeout(() => {
+        pausedRef.current = false;
+      }, 2000);
+    };
+    const onDecodeError = () => {
+      // decode errors fire continuously while no QR is in frame - ignore
+    };
+
+    // Prefer the rear/back camera (ideal for phones/tablets at a check-in
+    // desk). Most laptops only expose a single front-facing webcam and have
+    // no "environment" camera at all, which makes a strict facingMode
+    // constraint fail (silently, in some browsers) - so we fall back to
+    // whatever camera is actually available instead of erroring out.
     html5QrCode
-      .start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 240, height: 240 } },
-        (decodedText) => {
-          if (pausedRef.current) return;
-          pausedRef.current = true;
-          onScan(decodedText);
-          setTimeout(() => {
-            pausedRef.current = false;
-          }, 2000);
-        },
-        () => {
-          // decode errors fire continuously while no QR is in frame - ignore
+      .start({ facingMode: "environment" }, config, onSuccess, onDecodeError)
+      .then(() => {
+        if (!cancelled) setReady(true);
+      })
+      .catch(async () => {
+        try {
+          const cameras = await Html5Qrcode.getCameras();
+          if (!cameras || cameras.length === 0) {
+            throw new Error("No camera devices found");
+          }
+          // Fall back to the first available camera (typically the laptop webcam).
+          await html5QrCode.start(cameras[0].id, config, onSuccess, onDecodeError);
+          if (!cancelled) setReady(true);
+        } catch (err) {
+          console.error("QR scanner start error:", err);
+          if (!cancelled) {
+            setError(
+              "Could not access a camera. Grant camera permission in your browser, close any other app/tab using the camera, and try again — or use manual search instead."
+            );
+          }
         }
-      )
-      .then(() => setReady(true))
-      .catch((err) => {
-        console.error("QR scanner start error:", err);
-        setError("Could not access the camera. Check permissions or use manual search instead.");
       });
 
     return () => {
+      cancelled = true;
       html5QrCode.stop().catch(() => {});
       html5QrCode.clear().catch(() => {});
     };
