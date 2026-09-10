@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.log
+npm-debug.log*
+.DS_Store
+server/uploads/*
+!server/uploads/.gitkeep
+server/generated/
+server/prisma/dev.db
+server/prisma/migrations/**/migration_lock.toml.bak
+.vscode/
+.idea/
+*.pdf
+!client/public/**/*.pdf
