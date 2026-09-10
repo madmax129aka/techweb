@@ -1,0 +1,55 @@
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
+function getToken() {
+  return localStorage.getItem("techastra_token");
+}
+
+/**
+ * Thin fetch wrapper: prefixes the API base URL, attaches the JWT if present,
+ * JSON-encodes bodies (unless FormData is passed), and throws a normalized
+ * Error with the server's message on non-2xx responses.
+ */
+async function request(path, { method = "GET", body, headers = {}, isFormData = false } = {}) {
+  const token = getToken();
+  const finalHeaders = { ...headers };
+  if (!isFormData) finalHeaders["Content-Type"] = "application/json";
+  if (token) finalHeaders["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_URL}${path}`, {
+    method,
+    headers: finalHeaders,
+    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
+  });
+
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {
+    // no JSON body (e.g. CSV download) - handled by caller
+  }
+
+  if (!res.ok) {
+    const message = data?.error || `Request failed with status ${res.status}`;
+    throw new Error(message);
+  }
+
+  return data;
+}
+
+export const api = {
+  get: (path) => request(path),
+  post: (path, body, opts = {}) => request(path, { method: "POST", body, ...opts }),
+  put: (path, body) => request(path, { method: "PUT", body }),
+  patch: (path, body) => request(path, { method: "PATCH", body }),
+  delete: (path) => request(path, { method: "DELETE" }),
+  baseUrl: API_URL,
+};
+
+export function setToken(token) {
+  if (token) localStorage.setItem("techastra_token", token);
+  else localStorage.removeItem("techastra_token");
+}
+
+export function getStoredToken() {
+  return getToken();
+}

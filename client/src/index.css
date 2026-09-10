@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0f1424;
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(61, 217, 235, 0.08), transparent 40%),
+    radial-gradient(circle at 80% 0%, rgba(139, 92, 246, 0.10), transparent 45%);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Space Grotesk", sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(61, 217, 235, 0.35);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Consistent visible focus ring across the app */
+:focus-visible {
+  outline: 2px solid #3dd9eb;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.glass {
+  background: rgba(22, 27, 46, 0.55);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@keyframes slideInTop {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-slide-in-top {
+  animation: slideInTop 0.4s ease-out;
+}
+
+@keyframes heroFadeUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-hero {
+  animation: heroFadeUp 0.8s ease-out;
+}
+
+@keyframes scanline {
+  0% { top: 0%; }
+  100% { top: 100%; }
+}
+.animate-scanline {
+  animation: scanline 2s linear infinite;
+}
