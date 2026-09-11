@@ -3,6 +3,29 @@ import { Html5Qrcode } from "html5-qrcode";
 
 const SCANNER_ELEMENT_ID = "qr-scanner-viewport";
 
+/** Translates raw getUserMedia/html5-qrcode errors into an actionable message. */
+function describeCameraError(err) {
+  const name = err?.name || "";
+  const message = String(err?.message || err || "");
+
+  if (name === "NotAllowedError" || name === "PermissionDeniedError" || /permission denied/i.test(message)) {
+    return "Camera permission was denied. Click the camera/lock icon in your browser's address bar, allow camera access for this site, then reload and try again.";
+  }
+  if (name === "NotFoundError" || name === "DevicesNotFoundError" || /no camera devices found/i.test(message)) {
+    return "No camera was found on this computer. If you're on a desktop with no webcam, use the manual search option instead.";
+  }
+  if (name === "NotReadableError" || name === "TrackStartError" || /could not start video source/i.test(message)) {
+    return "Your camera is already in use by another app or browser tab (e.g. Zoom, Teams, another site). Close it and try again.";
+  }
+  if (name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError") {
+    return "This camera doesn't support the requested settings. Try a different camera if one is available.";
+  }
+  if (name === "SecurityError") {
+    return "Camera access was blocked for security reasons. Make sure you're on HTTPS or http://localhost.";
+  }
+  return `Could not access the camera (${name || "unknown error"}). Check permissions, close other apps using the camera, and try again — or use manual search instead.`;
+}
+
 /**
  * Full-screen-modal-friendly camera QR scanner.
  * Calls onScan(decodedText) once per successful decode, then briefly pauses
@@ -16,6 +39,17 @@ export default function QRScanner({ onScan, active = true }) {
 
   useEffect(() => {
     if (!active) return;
+
+    // A secure context (HTTPS, or http://localhost) is required for camera
+    // access at all - on plain http://<lan-ip> the browser blocks
+    // getUserMedia outright, before any permission prompt even appears.
+    if (!window.isSecureContext) {
+      setError(
+        "Camera access requires a secure connection. Open this page over HTTPS, or via http://localhost (not a plain IP address like http://192.168.x.x), then try again."
+      );
+      return;
+    }
+
     let cancelled = false;
     const html5QrCode = new Html5Qrcode(SCANNER_ELEMENT_ID);
     scannerRef.current = html5QrCode;
@@ -47,18 +81,14 @@ export default function QRScanner({ onScan, active = true }) {
         try {
           const cameras = await Html5Qrcode.getCameras();
           if (!cameras || cameras.length === 0) {
-            throw new Error("No camera devices found");
+            throw new Error("No camera devices found on this computer.");
           }
           // Fall back to the first available camera (typically the laptop webcam).
           await html5QrCode.start(cameras[0].id, config, onSuccess, onDecodeError);
           if (!cancelled) setReady(true);
         } catch (err) {
           console.error("QR scanner start error:", err);
-          if (!cancelled) {
-            setError(
-              "Could not access a camera. Grant camera permission in your browser, close any other app/tab using the camera, and try again — or use manual search instead."
-            );
-          }
+          if (!cancelled) setError(describeCameraError(err));
         }
       });
 
@@ -74,8 +104,8 @@ export default function QRScanner({ onScan, active = true }) {
       <div id={SCANNER_ELEMENT_ID} className="w-full rounded-xl overflow-hidden bg-black min-h-[280px]" />
       {ready && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="relative w-56 h-56 border-2 border-cyan/70 rounded-xl overflow-hidden">
-            <div className="absolute left-0 right-0 h-0.5 bg-cyan animate-scanline" />
+          <div className="relative w-56 h-56 border-2 border-gold/70 rounded-xl overflow-hidden">
+            <div className="absolute left-0 right-0 h-0.5 bg-gold animate-scanline" />
           </div>
         </div>
       )}
