@@ -28,9 +28,30 @@ export default function Dashboard() {
 
   const downloadIdCard = async () => {
     if (!cardRef.current) return;
-    const canvas = await html2canvas(cardRef.current, { backgroundColor: null, scale: 2 });
+
+    // Wait for web fonts (Orbitron/Space Grotesk/Inter) and the logo/QR
+    // images to finish loading before snapshotting - otherwise the
+    // capture can happen mid-layout-shift and come out misaligned.
+    if (document.fonts?.ready) {
+      await document.fonts.ready;
+    }
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    const canvas = await html2canvas(cardRef.current, {
+      backgroundColor: "#07070A",
+      scale: 3,
+      useCORS: true,
+      logging: false,
+      width: cardRef.current.offsetWidth,
+      height: cardRef.current.offsetHeight,
+    });
+
     const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [canvas.width, canvas.height] });
+    const pdf = new jsPDF({
+      orientation: canvas.height >= canvas.width ? "portrait" : "landscape",
+      unit: "px",
+      format: [canvas.width, canvas.height],
+    });
     pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
     pdf.save(`${user?.name || "TechAstra"}-ID-Card.pdf`);
   };
@@ -78,7 +99,7 @@ export default function Dashboard() {
                   <li key={c.id} className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-2">
                     <span className="text-sm capitalize">{c.type} — {c.certificateCode}</span>
                     {c.pdfUrl && (
-                      <a href={`${api.baseUrl}${c.pdfUrl}`} target="_blank" rel="noreferrer" className="text-cyan text-sm underline">
+                      <a href={`${api.baseUrl}${c.pdfUrl}`} target="_blank" rel="noreferrer" className="text-gold-light text-sm underline">
                         Download
                       </a>
                     )}
