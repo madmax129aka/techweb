@@ -14,13 +14,6 @@ const STATS = [
   { label: "Prize Pool", value: "₹1L+" },
 ];
 
-const ORBIT_DOTS = [
-  { color: "bg-ring-red", radius: 190, duration: "14s", delay: "0s" },
-  { color: "bg-ring-blue", radius: 190, duration: "14s", delay: "-3.5s" },
-  { color: "bg-ring-green", radius: 190, duration: "14s", delay: "-7s" },
-  { color: "bg-ring-yellow", radius: 190, duration: "14s", delay: "-10.5s" },
-];
-
 export default function Home() {
   const [events, setEvents] = useState([]);
   const { t } = useLanguage();
@@ -51,18 +44,7 @@ export default function Home() {
         </div>
 
         <div className="max-w-5xl mx-auto px-6 py-20 sm:py-28 text-center animate-hero">
-          <div className="relative flex items-center justify-center mb-8" style={{ height: 200 }}>
-            {ORBIT_DOTS.map((dot, i) => (
-              <span
-                key={i}
-                className={`absolute w-2.5 h-2.5 rounded-full ${dot.color} animate-orbit shadow-ring`}
-                style={{
-                  "--orbit-radius": `${dot.radius}px`,
-                  animationDuration: dot.duration,
-                  animationDelay: dot.delay,
-                }}
-              />
-            ))}
+          <div className="flex items-center justify-center mb-8">
             <TechAstraLogo size="xl" className="animate-gold-pulse" />
           </div>
 

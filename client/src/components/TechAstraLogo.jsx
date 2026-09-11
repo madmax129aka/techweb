@@ -1,44 +1,68 @@
-import React from "react";
+import React, { useState } from "react";
 
 /**
- * Recreation of the TechAstra'26 event mark: a metallic gold wordmark with
- * a spinning four-color glowing ring wrapped around the "T", inspired by
- * the official symposium logo artwork. Built as SVG + CSS so it scales
- * cleanly at any size without shipping an image asset.
- *
- * If the real exported logo file (e.g. /logo.png) is added under
- * client/public/, swap the <svg> below for an <img src="/logo.png" />
- * for pixel-perfect fidelity - everything else (sizing props, wrapper)
- * stays the same.
+ * The official TechAstra'26 event mark - gold metallic wordmark with the
+ * spinning four-color ring baked into the artwork (client/public/logo.png).
+ * Falls back to an SVG/CSS recreation if the image file is ever missing,
+ * so the navbar/hero never break.
  */
-export default function TechAstraLogo({ size = "md", showRing = true, className = "" }) {
-  const dims = {
-    sm: { w: 150, h: 46, font: 22 },
-    md: { w: 230, h: 70, font: 34 },
-    lg: { w: 380, h: 116, font: 56 },
-    xl: { w: 560, h: 170, font: 82 },
-  }[size] || { w: 230, h: 70, font: 34 };
+export default function TechAstraLogo({ size = "md", showGlow = true, className = "" }) {
+  const [imgFailed, setImgFailed] = useState(false);
 
+  // Matches the real logo's aspect ratio (725x344 ≈ 2.11:1)
+  const dims = {
+    sm: { w: 140, h: 66, font: 20 },
+    md: { w: 210, h: 100, font: 30 },
+    lg: { w: 340, h: 161, font: 48 },
+    xl: { w: 520, h: 246, font: 74 },
+  }[size] || { w: 210, h: 100, font: 30 };
+
+  if (!imgFailed) {
+    return (
+      <div
+        className={`relative inline-flex items-center justify-center select-none ${className}`}
+        style={{ width: dims.w, height: dims.h }}
+      >
+        {showGlow && (
+          <div
+            className="absolute inset-0 -z-10 blur-2xl opacity-60"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(242,194,48,0.35) 0%, rgba(229,71,58,0.15) 45%, transparent 75%)",
+            }}
+          />
+        )}
+        <img
+          src="/logo.png"
+          alt="TechAstra '26"
+          width={dims.w}
+          height={dims.h}
+          className="relative z-10 w-full h-full object-contain"
+          style={{ filter: "drop-shadow(0 0 14px rgba(242,194,48,0.4))" }}
+          onError={() => setImgFailed(true)}
+        />
+      </div>
+    );
+  }
+
+  // Fallback recreation (only rendered if /logo.png fails to load)
   return (
     <div
       className={`relative inline-flex items-center justify-center select-none ${className}`}
       style={{ width: dims.w, height: dims.h }}
     >
-      {showRing && (
-        <div
-          className="absolute rounded-full animate-ring-spin"
-          style={{
-            width: dims.h * 0.92,
-            height: dims.h * 0.92,
-            left: dims.h * -0.05,
-            background: "conic-gradient(from 0deg, #E5473A 0deg, #F2C230 90deg, #22C55E 180deg, #3B82F6 270deg, #E5473A 360deg)",
-            WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px))",
-            mask: "radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px))",
-            filter: "drop-shadow(0 0 10px rgba(242,194,48,0.55))",
-          }}
-        />
-      )}
-
+      <div
+        className="absolute rounded-full animate-ring-spin"
+        style={{
+          width: dims.h * 0.92,
+          height: dims.h * 0.92,
+          left: dims.h * -0.05,
+          background: "conic-gradient(from 0deg, #E5473A 0deg, #F2C230 90deg, #22C55E 180deg, #3B82F6 270deg, #E5473A 360deg)",
+          WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px))",
+          mask: "radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px))",
+          filter: "drop-shadow(0 0 10px rgba(242,194,48,0.55))",
+        }}
+      />
       <svg
         viewBox={`0 0 ${dims.w} ${dims.h}`}
         width={dims.w}
@@ -58,7 +82,7 @@ export default function TechAstraLogo({ size = "md", showRing = true, className 
           </filter>
         </defs>
         <text
-          x={showRing ? dims.h * 0.55 : 4}
+          x={dims.h * 0.55}
           y={dims.h * 0.68}
           fontFamily="Orbitron, sans-serif"
           fontWeight="800"
