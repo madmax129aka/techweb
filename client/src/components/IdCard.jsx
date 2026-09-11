@@ -32,10 +32,19 @@ const IdCard = forwardRef(function IdCard({ registration, user, events }, ref) {
         <span className="text-[10px] font-bold uppercase tracking-widest text-onyx">Official Delegate ID</span>
       </div>
 
-      <div className="p-5 flex gap-4" style={{ backgroundColor: "#0B0A08" }}>
+      {/*
+        NOTE: no Tailwind `truncate` (overflow:hidden + text-overflow:ellipsis
+        + white-space:nowrap) anywhere below - html2canvas does not compute
+        box height correctly for ellipsis-truncated lines, which collapsed
+        each line's height to ~0 and made every following line render on
+        top of the previous one. Fixed-width columns + normal wrapping
+        instead, so long text wraps to a second line rather than relying
+        on ellipsis truncation.
+      */}
+      <div className="p-5" style={{ backgroundColor: "#0B0A08", display: "flex", gap: 16 }}>
         <div
-          className="w-20 h-20 rounded-xl overflow-hidden flex items-center justify-center shrink-0 border-2 border-gold/50"
-          style={{ backgroundColor: "#181611" }}
+          className="w-20 h-20 rounded-xl overflow-hidden flex items-center justify-center border-2 border-gold/50"
+          style={{ backgroundColor: "#181611", flexShrink: 0 }}
         >
           {user?.photoUrl ? (
             <img src={user.photoUrl} alt={user.name} className="w-full h-full object-cover" crossOrigin="anonymous" />
@@ -43,11 +52,23 @@ const IdCard = forwardRef(function IdCard({ registration, user, events }, ref) {
             <span className="text-2xl">👤</span>
           )}
         </div>
-        <div className="min-w-0">
-          <p className="font-heading text-lg font-bold text-white truncate">{user?.name}</p>
-          <p className="text-xs text-white/60 truncate">{user?.collegeName || "—"}</p>
-          <p className="text-xs text-white/60">Reg No: {user?.registerNo || "N/A"}</p>
-          <p className="text-xs mt-1 font-semibold" style={{ color: "#F2D48A" }}>
+        <div style={{ width: 244 }}>
+          <p
+            className="font-heading font-bold text-white"
+            style={{ fontSize: 17, lineHeight: "22px", margin: 0, wordBreak: "break-word" }}
+          >
+            {user?.name}
+          </p>
+          <p
+            className="text-white/60"
+            style={{ fontSize: 12, lineHeight: "16px", margin: "3px 0 0", wordBreak: "break-word" }}
+          >
+            {user?.collegeName || "—"}
+          </p>
+          <p className="text-white/60" style={{ fontSize: 12, lineHeight: "16px", margin: "3px 0 0" }}>
+            Reg No: {user?.registerNo || "N/A"}
+          </p>
+          <p style={{ fontSize: 12, lineHeight: "16px", margin: "4px 0 0", fontWeight: 600, color: "#F2D48A" }}>
             {registration?.registrationCode}
           </p>
         </div>
@@ -55,28 +76,40 @@ const IdCard = forwardRef(function IdCard({ registration, user, events }, ref) {
 
       {registration?.teamName && (
         <div className="px-5 pb-2" style={{ backgroundColor: "#0B0A08" }}>
-          <p className="text-xs font-semibold" style={{ color: "#F2C230" }}>
+          <p style={{ fontSize: 12, lineHeight: "16px", margin: 0, fontWeight: 600, color: "#F2C230" }}>
             Team: {registration.teamName}
           </p>
           {Array.isArray(registration.teamMembers) && (
-            <ul className="text-xs text-white/70 mt-1 space-y-0.5">
+            <div style={{ marginTop: 4 }}>
               {registration.teamMembers.map((m, i) => (
-                <li key={i}>
+                <p
+                  key={i}
+                  className="text-white/70"
+                  style={{ fontSize: 11, lineHeight: "15px", margin: "2px 0 0", wordBreak: "break-word" }}
+                >
                   {m.name} ({m.regNo}) {m.role === "lead" ? "— Lead" : ""}
-                </li>
+                </p>
               ))}
-            </ul>
+            </div>
           )}
         </div>
       )}
 
       <div className="px-5 pb-3" style={{ backgroundColor: "#0B0A08" }}>
-        <p className="text-xs text-white/60 mb-1">Registered Events</p>
-        <ul className="text-sm text-white space-y-0.5">
+        <p className="text-white/60" style={{ fontSize: 12, lineHeight: "16px", margin: "0 0 4px" }}>
+          Registered Events
+        </p>
+        <div>
           {(events || []).map((e) => (
-            <li key={e.id} className="truncate">• {e.name}</li>
+            <p
+              key={e.id}
+              className="text-white"
+              style={{ fontSize: 13, lineHeight: "18px", margin: "2px 0 0", wordBreak: "break-word" }}
+            >
+              • {e.name}
+            </p>
           ))}
-        </ul>
+        </div>
       </div>
 
       <div className="flex items-center justify-center bg-white p-4">
