@@ -4,14 +4,30 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Onyx black base - the "mission control at midnight" backdrop
-        base: "#07070A",
-        surface: "#12110C",
+        // Deep warm-charcoal base (not flat black) - a Vision/Iron-Man
+        // "power core" backdrop rather than a plain onyx void
+        base: "#120508",
+        surface: "#1B0A0E",
         onyx: {
           DEFAULT: "#0B0A08",
           light: "#181611",
         },
-        // Gold - the hero metal of the TechAstra'26 wordmark
+        // Crimson - Vision's cloak / Iron Man's armor red, now the hero accent
+        crimson: {
+          DEFAULT: "#C81E3A",
+          light: "#FF4D6A",
+          dim: "#7A1220",
+          glow: "#FF8FA3",
+        },
+        // Arc reactor blue - the energy-core glow accent
+        arc: {
+          DEFAULT: "#22D3EE",
+          light: "#7DE8FA",
+          dim: "#0E7490",
+        },
+        // Gold - kept as a trim/accent metal (the real TechAstra'26 logo
+        // artwork is genuinely gold), used sparingly rather than as the
+        // dominant theme color
         gold: {
           DEFAULT: "#D9A840",
           light: "#F2D48A",
@@ -60,6 +76,9 @@ export default {
         "gold-lg": "0 0 60px rgba(217, 168, 64, 0.4), 0 0 120px rgba(217, 168, 64, 0.15)",
         ring: "0 0 40px rgba(242, 194, 48, 0.25)",
         "3d": "0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(217, 168, 64, 0.1)",
+        crimson: "0 0 30px rgba(200, 30, 58, 0.45)",
+        "crimson-lg": "0 0 60px rgba(200, 30, 58, 0.45), 0 0 120px rgba(217, 168, 64, 0.2)",
+        arc: "0 0 35px rgba(34, 211, 238, 0.45)",
         "vision-v": "0 0 35px rgba(139, 92, 246, 0.35)",
         "vision-i1": "0 0 35px rgba(61, 217, 235, 0.35)",
         "vision-s": "0 0 35px rgba(52, 211, 153, 0.35)",
@@ -74,6 +93,9 @@ export default {
         "circuit": "linear-gradient(rgba(217,168,64,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(217,168,64,0.06) 1px, transparent 1px)",
         "gold-gradient": "linear-gradient(135deg, #F2D48A 0%, #D9A840 45%, #8A6A24 100%)",
         "vision-gradient": "linear-gradient(120deg, #8B5CF6 0%, #3DD9EB 20%, #34D399 40%, #F472B6 60%, #F2C230 80%, #3B82F6 100%)",
+        "hero-gradient": "linear-gradient(135deg, #C81E3A 0%, #D9A840 50%, #22D3EE 100%)",
+        "cta-gradient": "linear-gradient(135deg, #FF4D6A 0%, #C81E3A 55%, #7A1220 100%)",
+        "core-gradient": "radial-gradient(circle, #FFE9A8 0%, #D9A840 25%, #C81E3A 60%, #7A1220 100%)",
       },
       backgroundSize: {
         circuit: "42px 42px",

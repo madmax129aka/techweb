@@ -2,9 +2,9 @@ import React from "react";
 
 const VARIANTS = {
   primary:
-    "relative overflow-hidden bg-gold-gradient text-onyx font-bold shadow-gold hover:shadow-gold-lg border border-gold-light/40",
-  secondary: "bg-violet text-white hover:bg-violet/80",
-  outline: "border border-gold/40 text-gold-light hover:border-gold hover:bg-gold/10 bg-transparent",
+    "relative overflow-hidden bg-cta-gradient text-white font-bold shadow-crimson hover:shadow-crimson-lg border border-crimson-light/50 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]",
+  secondary: "bg-arc text-onyx font-bold hover:bg-arc-light shadow-arc",
+  outline: "border border-crimson/40 text-crimson-light hover:border-crimson hover:bg-crimson/10 bg-transparent",
   danger: "bg-danger text-white hover:bg-danger/80",
   ghost: "bg-transparent text-white hover:bg-white/10",
 };

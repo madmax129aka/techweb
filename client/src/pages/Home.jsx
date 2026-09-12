@@ -30,9 +30,9 @@ export default function Home() {
       <section className="relative overflow-hidden border-b border-gold/10">
         <div className="grain-overlay" />
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-[-15%] left-[-10%] w-[520px] h-[520px] bg-vision-v/10 rounded-full blur-[130px]" />
-          <div className="absolute bottom-[-15%] right-[-10%] w-[520px] h-[520px] bg-vision-n/10 rounded-full blur-[130px]" />
-          <div className="absolute top-[30%] right-[15%] w-[300px] h-[300px] bg-vision-s/8 rounded-full blur-[100px]" />
+          <div className="absolute top-[-15%] left-[-10%] w-[520px] h-[520px] bg-crimson/12 rounded-full blur-[130px]" />
+          <div className="absolute bottom-[-15%] right-[-10%] w-[520px] h-[520px] bg-arc/10 rounded-full blur-[130px]" />
+          <div className="absolute top-[30%] right-[15%] w-[300px] h-[300px] bg-gold/8 rounded-full blur-[100px]" />
           {/* scattered twinkle dots for a "starfield / circuit node" feel */}
           {[...Array(14)].map((_, i) => (
             <span
@@ -84,13 +84,13 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right: 3D centerpiece */}
+          {/* Right: 3D centerpiece - the "Vision Core" */}
           <div className="relative flex items-center justify-center h-[320px] sm:h-[380px]">
-            <div className="absolute w-64 h-64 rounded-full bg-vision-gradient opacity-20 blur-3xl animate-gradient-shift" />
-            <Polyhedron3D size={230} className="animate-float-slow" />
-            <span className="absolute top-4 right-8 w-3 h-3 rounded-full bg-vision-i2 animate-float-medium shadow-vision-i2" />
-            <span className="absolute bottom-10 left-4 w-2.5 h-2.5 rounded-full bg-vision-s animate-float-slow shadow-vision-s" />
-            <span className="absolute bottom-4 right-16 w-2 h-2 rounded-full bg-vision-o animate-float-medium shadow-vision-o" />
+            <div className="absolute w-72 h-72 rounded-full bg-hero-gradient opacity-25 blur-3xl animate-gradient-shift" />
+            <Polyhedron3D size={240} className="animate-float-slow" />
+            <span className="absolute top-4 right-8 w-3 h-3 rounded-full bg-arc animate-float-medium shadow-arc" />
+            <span className="absolute bottom-10 left-4 w-2.5 h-2.5 rounded-full bg-crimson-light animate-float-slow shadow-crimson" />
+            <span className="absolute bottom-4 right-16 w-2 h-2 rounded-full bg-gold-light animate-float-medium shadow-gold" />
           </div>
         </div>
       </section>
