@@ -1,10 +1,13 @@
 import React from "react";
+import CinematicImage from "../components/CinematicImage";
+import { GALLERY_IMAGES } from "../lib/eventImages";
 
 /**
- * Minimal photo-moments page, kept in the same dark/cinematic language
- * as the rest of the public site. Placeholder tiles until real event
- * photography is added - swap the placeholder divs for <img> tiles once
- * photos exist.
+ * Photo-moments page, kept in the same dark/cinematic language as the
+ * rest of the public site. Uses generic themed stock photos (see
+ * lib/eventImages.js) as a placeholder set - swap GALLERY_IMAGES for
+ * your own uploaded event photography once it exists (either external
+ * URLs or files under client/public/, both work the same way here).
  */
 export default function Gallery() {
   return (
@@ -13,12 +16,9 @@ export default function Gallery() {
       <h1 className="font-serif text-3xl sm:text-5xl text-offwhite text-center mb-16">Gallery</h1>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
-        {[...Array(9)].map((_, i) => (
-          <div
-            key={i}
-            className="aspect-square bg-gradient-to-br from-crimson/15 via-transparent to-arc/10 flex items-center justify-center text-offwhite/25 text-xs uppercase tracking-cinematic"
-          >
-            Photo {i + 1}
+        {GALLERY_IMAGES.map((src, i) => (
+          <div key={i} className="relative aspect-square">
+            <CinematicImage src={src} alt={`TechAstra moment ${i + 1}`} accent={i % 2 === 0 ? "crimson" : "arc"} />
           </div>
         ))}
       </div>

@@ -5,6 +5,8 @@ import AnnouncementBanner from "../components/AnnouncementBanner";
 import TechAstraLogo from "../components/TechAstraLogo";
 import VisionStone from "../components/VisionStone";
 import VisionPillars from "../components/VisionPillars";
+import CinematicImage from "../components/CinematicImage";
+import { HERO_IMAGES, getEventImage } from "../lib/eventImages";
 import { api } from "../lib/api";
 import { usePanels } from "../context/PanelContext";
 
@@ -28,18 +30,21 @@ const EXPLORE_CARDS = [
     title: "Events",
     desc: "Eight tracks of competition across a single unforgettable day.",
     accent: "crimson",
+    image: HERO_IMAGES.flagship,
   },
   {
     to: "/leaderboard",
     title: "Leaderboard",
     desc: "Live results as they're announced, event by event.",
     accent: "arc",
+    image: HERO_IMAGES.registrations,
   },
   {
     to: "/gallery",
     title: "Gallery",
     desc: "Moments from past editions of TechAstra.",
     accent: "crimson",
+    image: HERO_IMAGES.intro,
   },
 ];
 
@@ -73,6 +78,7 @@ export default function Home() {
       body: "Virtual Intelligence. Information Security. Sustainable Innovation. Intelligent Healthcare. Optimization & Automation. Next-generation Networks.",
       cta: { label: "Explore Events", to: "/events" },
       tint: "from-crimson/25 via-void to-arc/10",
+      image: HERO_IMAGES.intro,
     },
     {
       key: "flagship",
@@ -83,6 +89,7 @@ export default function Home() {
         : "From code to circuitry, every track of TechAstra converges on a single unforgettable day.",
       cta: { label: "Discover More", to: "/events" },
       tint: "from-arc/20 via-void to-crimson/10",
+      image: featured ? getEventImage(featured.name) : HERO_IMAGES.flagship,
     },
     {
       key: "registrations",
@@ -91,6 +98,7 @@ export default function Home() {
       body: "Individual or team \u2014 secure your place across every track before seats close.",
       cta: { label: "Register Now", action: "openPanel" },
       tint: "from-crimson/30 via-void to-crimson/5",
+      image: HERO_IMAGES.registrations,
     },
   ];
 
@@ -146,15 +154,28 @@ export default function Home() {
         </div>
 
         {/* Each slide is layered absolutely and crossfaded via opacity -
-            a slow, deliberate transition rather than a hard cut. */}
+            a slow, deliberate transition rather than a hard cut. A real
+            photo (see lib/eventImages.js) sits behind the existing
+            crimson/cyan gradient scrim + cinematic-overlay vignette, so
+            copy stays legible over any image. */}
         {slides.map((slide, i) => (
           <div
             key={slide.key}
-            className={`cinematic-scrim bg-cinematic-overlay bg-gradient-to-br ${slide.tint} transition-opacity duration-1000 ease-in-out ${
+            className={`cinematic-scrim transition-opacity duration-1000 ease-in-out ${
               i === slideIndex ? "opacity-100 z-0" : "opacity-0 -z-10"
             }`}
             aria-hidden={i !== slideIndex}
-          />
+          >
+            <img
+              src={slide.image}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+            <div className={`absolute inset-0 bg-cinematic-overlay bg-gradient-to-br ${slide.tint}`} />
+          </div>
         ))}
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-10 text-center">
@@ -249,11 +270,7 @@ export default function Home() {
               className="group relative aspect-[4/5] overflow-hidden border-r border-b border-crimson/10 last:border-r-0"
               data-log={`explore-${card.title.toLowerCase()}`}
             >
-              <div
-                className={`absolute inset-0 bg-gradient-to-t ${
-                  card.accent === "crimson" ? "from-crimson/40 via-crimson/5" : "from-arc/25 via-arc/5"
-                } to-transparent transition-transform duration-700 ease-out group-hover:scale-105`}
-              />
+              <CinematicImage src={card.image} alt={card.title} accent={card.accent} />
               <div className="absolute inset-0 flex flex-col items-start justify-end p-6 sm:p-8">
                 <h3 className="font-serif text-xl sm:text-2xl text-offwhite mb-2">{card.title}</h3>
                 <p className="text-offwhite/55 text-xs sm:text-sm leading-relaxed mb-4 max-w-[220px]">

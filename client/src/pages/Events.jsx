@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import Button from "../components/ui/Button";
+import CinematicImage from "../components/CinematicImage";
+import { getEventImage } from "../lib/eventImages";
 import { api } from "../lib/api";
 import { useCart } from "../context/CartContext";
 
@@ -80,11 +82,7 @@ export default function Events() {
                 className="relative aspect-[4/5] overflow-hidden block"
                 data-log={`events-card-open-${event.id}`}
               >
-                <div
-                  className={`absolute inset-0 bg-gradient-to-t ${
-                    accent === "crimson" ? "from-crimson/40 via-crimson/5" : "from-arc/25 via-arc/5"
-                  } to-transparent transition-transform duration-700 ease-out group-hover:scale-105`}
-                />
+                <CinematicImage src={getEventImage(event.name)} alt={event.name} accent={accent} />
 
                 {event.isTeamEvent && (
                   <span className="absolute top-5 right-5 text-[10px] uppercase tracking-cinematic text-offwhite/70 border border-offwhite/20 px-2 py-1">
