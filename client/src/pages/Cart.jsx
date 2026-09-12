@@ -1,12 +1,13 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import { useCart } from "../context/CartContext";
+import { usePanels } from "../context/PanelContext";
 
 export default function Cart() {
   const { items, removeItem, total } = useCart();
-  const navigate = useNavigate();
+  const { openPanel } = usePanels();
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-12">
@@ -48,7 +49,12 @@ export default function Cart() {
             <span className="font-heading text-2xl font-bold text-cyan">₹{total}</span>
           </Card>
 
-          <Button size="lg" className="w-full" onClick={() => navigate("/register")}>
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={() => openPanel("registration")}
+            data-log="cart-proceed-to-registration"
+          >
             Proceed to Registration
           </Button>
         </>

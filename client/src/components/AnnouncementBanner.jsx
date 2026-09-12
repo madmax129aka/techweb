@@ -36,8 +36,8 @@ export default function AnnouncementBanner() {
   return (
     <>
       {items.length > 0 && (
-        <div className="relative border-y border-crimson/15 overflow-hidden py-3 flex items-center bg-base/40">
-          <div className="flex items-center gap-2 px-5 sm:px-8 shrink-0 z-10 bg-base border-r border-crimson/15">
+        <div className="relative border-y border-crimson/15 overflow-hidden py-3 flex items-center bg-void/40">
+          <div className="flex items-center gap-2 px-5 sm:px-8 shrink-0 z-10 bg-void border-r border-crimson/15">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full rounded-full bg-crimson animate-live-pulse" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-crimson" />
@@ -60,7 +60,7 @@ export default function AnnouncementBanner() {
 
       {latestPopup && (
         <div className="fixed top-24 right-4 sm:right-8 z-50 max-w-sm animate-slide-in-top">
-          <div className="bg-base border border-crimson/30 p-5 flex items-start gap-3">
+          <div className="bg-void border border-crimson/30 p-5 flex items-start gap-3">
             <span className="w-1.5 h-1.5 rounded-full bg-arc mt-1.5 shrink-0" />
             <div>
               <p className="text-[10px] tracking-cinematic uppercase text-crimson-light mb-1.5">

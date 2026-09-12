@@ -28,7 +28,7 @@ export default function AdminPortal() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
-              tab === t.key ? "bg-cyan text-base" : "bg-white/5 text-white/70"
+              tab === t.key ? "bg-cyan text-void" : "bg-white/5 text-white/70"
             }`}
           >
             {t.label}

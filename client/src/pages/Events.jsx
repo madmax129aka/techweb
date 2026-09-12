@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
@@ -55,7 +56,13 @@ export default function Events() {
                   <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70">Team Event</span>
                 )}
               </div>
-              <h3 className="font-heading font-bold text-lg mb-1">{event.name}</h3>
+              <Link
+                to={`/events/${event.id}`}
+                className="font-heading font-bold text-lg mb-1 hover:text-arc transition-colors"
+                data-log={`events-view-detail-${event.id}`}
+              >
+                {event.name}
+              </Link>
               <p className="text-sm text-white/60 mb-3 flex-1">{event.description}</p>
 
               <div className="text-sm text-white/70 mb-3 space-y-1">
@@ -66,14 +73,19 @@ export default function Events() {
 
               <div className="flex items-center justify-between mb-3">
                 <span className="text-cyan font-bold text-lg">₹{event.fee}</span>
-                {event.rulebook && (
-                  <button
-                    className="text-xs text-white/60 hover:text-cyan underline"
-                    onClick={() => setRulebookEvent(event)}
-                  >
-                    Rulebook
-                  </button>
-                )}
+                <div className="flex items-center gap-3">
+                  {event.rulebook && (
+                    <button
+                      className="text-xs text-white/60 hover:text-cyan underline"
+                      onClick={() => setRulebookEvent(event)}
+                    >
+                      Rulebook
+                    </button>
+                  )}
+                  <Link to={`/events/${event.id}`} className="text-xs text-white/60 hover:text-cyan underline">
+                    View Details
+                  </Link>
+                </div>
               </div>
 
               <Button

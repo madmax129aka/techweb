@@ -7,7 +7,18 @@ export default {
         // Near-black base, deliberately blended toward the requested
         // #AA0505 blood-red rather than a flat neutral charcoal - this is
         // the "deep, moody" cinematic backdrop the whole site sits on.
-        base: "#0D0303",
+        //
+        // NAMED "void" NOT "base": Tailwind ships a BUILT-IN utility
+        // called `text-base` that means font-size: 1rem. A custom color
+        // named `base` silently overrides that utility's *meaning* for
+        // `text-base` (Tailwind can't tell "font-size" and "color" apart
+        // by name alone - it just resolves the last matching rule), which
+        // is exactly why buttons/paragraphs across the site rendered with
+        // invisible near-black text instead of the font-size bump they
+        // were written for. Renaming this color avoids the collision
+        // entirely; every `text-base`/`bg-base`/`border-base` usage below
+        // was swapped to `text-void`/`bg-void`/`border-void`.
+        void: "#0D0303",
         surface: "#1A0505",
         onyx: {
           DEFAULT: "#0B0A08",

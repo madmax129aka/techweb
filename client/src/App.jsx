@@ -1,19 +1,21 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Link } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RegistrationPanel from "./components/panels/RegistrationPanel";
+import HelpDeskPanel from "./components/panels/HelpDeskPanel";
 
 import Home from "./pages/Home";
 import Events from "./pages/Events";
+import EventDetail from "./pages/EventDetail";
 import Cart from "./pages/Cart";
-import Register from "./pages/Register";
-import Checkout from "./pages/Checkout";
 import Status from "./pages/Status";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Leaderboard from "./pages/Leaderboard";
 import VerifyCertificate from "./pages/VerifyCertificate";
-import HelpDesk from "./pages/HelpDesk";
+import Gallery from "./pages/Gallery";
+import FAQ from "./pages/FAQ";
 
 import RegistrationTeamPortal from "./pages/portals/RegistrationTeamPortal";
 import CoordinatorPortal from "./pages/portals/CoordinatorPortal";
@@ -38,14 +40,14 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/events" element={<Events />} />
+          <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/checkout" element={<Checkout />} />
           <Route path="/status" element={<Status />} />
           <Route path="/login" element={<Login />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/verify-certificate" element={<VerifyCertificate />} />
-          <Route path="/help" element={<HelpDesk />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/faq" element={<FAQ />} />
 
           <Route
             path="/dashboard"
@@ -108,6 +110,14 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
+
+      {/*
+        Slide-in form overlays, mounted once here (like FullScreenMenu)
+        rather than as routed pages - see PanelContext for how any page
+        opens these via usePanels().openPanel("registration" | "help").
+      */}
+      <RegistrationPanel />
+      <HelpDeskPanel />
     </div>
   );
 }
@@ -121,10 +131,25 @@ function NotFound() {
   );
 }
 
+// A single minimal dark bar - small utility links only, nothing
+// decorative - per the reference site's restrained footer treatment.
 function Footer() {
   return (
-    <footer className="border-t border-white/10 py-6 text-center text-white/40 text-sm">
-      TechAstra National Symposium · Built with Kiro
+    <footer className="border-t border-crimson/10 bg-void">
+      <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] tracking-wide text-offwhite/35">
+        <span>&copy; {new Date().getFullYear()} TechAstra National Symposium</span>
+        <div className="flex items-center gap-6">
+          <Link to="/faq" className="hover:text-arc transition-colors" data-log="footer-faq">
+            FAQ
+          </Link>
+          <Link to="/verify-certificate" className="hover:text-arc transition-colors" data-log="footer-verify-certificate">
+            Verify Certificate
+          </Link>
+          <Link to="/status" className="hover:text-arc transition-colors" data-log="footer-status">
+            Status
+          </Link>
+        </div>
+      </div>
     </footer>
   );
 }

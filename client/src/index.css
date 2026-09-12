@@ -297,11 +297,18 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Crimson-to-black vignette sitting over hero imagery so text stays
    legible without needing an opaque panel behind it (see the
-   cinematic-overlay background-image utility in tailwind.config.js). */
+   cinematic-overlay background-image utility in tailwind.config.js).
+   Deliberately does NOT set z-index here - custom CSS after
+   @tailwind utilities wins the cascade over Tailwind's own z-* utility
+   classes at equal specificity, so a hardcoded z-index here would
+   silently override any z-0/-z-10 classes callers add inline (exactly
+   what the Home.jsx hero carousel needs to stack slides). Callers that
+   only ever render a single static scrim (e.g. EventDetail.jsx) are
+   unaffected since normal DOM order already puts it behind subsequent
+   relative/z-10 content. */
 .cinematic-scrim {
   position: absolute;
   inset: 0;
-  z-index: 0;
 }
 
 /* Thin, uppercase, widely-spaced nav links - deliberately light-weight,
@@ -369,4 +376,48 @@ h1, h2, h3, h4, h5, h6 {
 }
 .animate-menu-fade {
   animation: menuFadeIn 0.5s ease both;
+}
+
+/* ============================================================
+   Slide-in form panels ("forms as overlays, not pages" pattern)
+   ============================================================ */
+
+@keyframes panelBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-panel-backdrop {
+  animation: panelBackdropIn 0.4s ease both;
+}
+
+@keyframes panelSlideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.animate-panel-slide-in {
+  animation: panelSlideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ============================================================
+   FAQ accordion - plain typography, one section open at a time
+   ============================================================ */
+
+.accordion-item {
+  border-bottom: 1px solid rgba(170, 5, 5, 0.12);
+}
+
+/* Grid-rows trick: animating from 0fr -> 1fr lets the panel expand to
+   its natural content height without JS needing to measure anything
+   (a plain max-height transition would require guessing a fixed value). */
+.accordion-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  transition: grid-template-rows 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.accordion-panel.accordion-open {
+  grid-template-rows: 1fr;
+}
+.accordion-panel > div {
+  overflow: hidden;
 }

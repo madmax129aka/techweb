@@ -93,7 +93,7 @@ export default function RegistrationTeamPortal() {
           <button
             key={s}
             onClick={() => setFilter(s)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium capitalize ${filter === s ? "bg-cyan text-base" : "bg-white/5 text-white/70"}`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium capitalize ${filter === s ? "bg-cyan text-void" : "bg-white/5 text-white/70"}`}
           >
             {s}
           </button>

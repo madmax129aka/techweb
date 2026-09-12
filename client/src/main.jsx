@@ -6,6 +6,7 @@ import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { CartProvider } from "./context/CartContext.jsx";
 import { LanguageProvider } from "./context/LanguageContext.jsx";
+import { PanelProvider } from "./context/PanelContext.jsx";
 import VisionCursor from "./components/VisionCursor.jsx";
 import { initClickLogger } from "./lib/clickLogger.js";
 import "./index.css";
@@ -23,18 +24,20 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <LanguageProvider>
         <AuthProvider>
           <CartProvider>
-            <VisionCursor />
-            <App />
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                style: {
-                  background: "#0D0303",
-                  color: "#F5F3F0",
-                  border: "1px solid rgba(170,5,5,0.3)",
-                },
-              }}
-            />
+            <PanelProvider>
+              <VisionCursor />
+              <App />
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  style: {
+                    background: "#0D0303",
+                    color: "#F5F3F0",
+                    border: "1px solid rgba(170,5,5,0.3)",
+                  },
+                }}
+              />
+            </PanelProvider>
           </CartProvider>
         </AuthProvider>
       </LanguageProvider>
