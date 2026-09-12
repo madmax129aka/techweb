@@ -4,22 +4,32 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Deep warm-charcoal base (not flat black) - a Vision/Iron-Man
-        // "power core" backdrop rather than a plain onyx void
-        base: "#120508",
-        surface: "#1B0A0E",
+        // Near-black base, deliberately blended toward the requested
+        // #AA0505 blood-red rather than a flat neutral charcoal - this is
+        // the "deep, moody" cinematic backdrop the whole site sits on.
+        base: "#0D0303",
+        surface: "#1A0505",
         onyx: {
           DEFAULT: "#0B0A08",
           light: "#181611",
         },
-        // Crimson - Vision's cloak / Iron Man's armor red, now the hero accent
+        // Crimson - the exact #AA0505 requested as the dominant background
+        // wash, which also happens to be Vision's (Avengers) skin tone and
+        // Iron Man's armor red - ties the palette directly to the cursor
+        // and theme concept below.
         crimson: {
-          DEFAULT: "#C81E3A",
-          light: "#FF4D6A",
-          dim: "#7A1220",
-          glow: "#FF8FA3",
+          DEFAULT: "#AA0505",
+          light: "#E23B3B",
+          dim: "#4D0202",
+          glow: "#FF8080",
         },
-        // Arc reactor blue - the energy-core glow accent
+        // Off-white body/heading text on dark hero imagery, per the
+        // cinematic/luxury brief (not pure #fff, easier on the eyes)
+        offwhite: "#F5F3F0",
+        // Arc reactor / Mind Stone cyan - the ONE accent color used
+        // sparingly for links, CTAs, and status highlights against the
+        // dark base (mirrors Vision's glowing cyan Mind Stone against his
+        // red body - the same red/cyan pairing as the palette above)
         arc: {
           DEFAULT: "#22D3EE",
           light: "#7DE8FA",
@@ -76,9 +86,10 @@ export default {
         "gold-lg": "0 0 60px rgba(217, 168, 64, 0.4), 0 0 120px rgba(217, 168, 64, 0.15)",
         ring: "0 0 40px rgba(242, 194, 48, 0.25)",
         "3d": "0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(217, 168, 64, 0.1)",
-        crimson: "0 0 30px rgba(200, 30, 58, 0.45)",
-        "crimson-lg": "0 0 60px rgba(200, 30, 58, 0.45), 0 0 120px rgba(217, 168, 64, 0.2)",
+        crimson: "0 0 30px rgba(170, 5, 5, 0.5)",
+        "crimson-lg": "0 0 60px rgba(170, 5, 5, 0.5), 0 0 120px rgba(34, 211, 238, 0.15)",
         arc: "0 0 35px rgba(34, 211, 238, 0.45)",
+        cinematic: "0 40px 80px -20px rgba(0, 0, 0, 0.85)",
         "vision-v": "0 0 35px rgba(139, 92, 246, 0.35)",
         "vision-i1": "0 0 35px rgba(61, 217, 235, 0.35)",
         "vision-s": "0 0 35px rgba(52, 211, 153, 0.35)",
@@ -93,12 +104,20 @@ export default {
         "circuit": "linear-gradient(rgba(217,168,64,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(217,168,64,0.06) 1px, transparent 1px)",
         "gold-gradient": "linear-gradient(135deg, #F2D48A 0%, #D9A840 45%, #8A6A24 100%)",
         "vision-gradient": "linear-gradient(120deg, #8B5CF6 0%, #3DD9EB 20%, #34D399 40%, #F472B6 60%, #F2C230 80%, #3B82F6 100%)",
-        "hero-gradient": "linear-gradient(135deg, #C81E3A 0%, #D9A840 50%, #22D3EE 100%)",
-        "cta-gradient": "linear-gradient(135deg, #FF4D6A 0%, #C81E3A 55%, #7A1220 100%)",
-        "core-gradient": "radial-gradient(circle, #FFE9A8 0%, #D9A840 25%, #C81E3A 60%, #7A1220 100%)",
+        "hero-gradient": "linear-gradient(135deg, #AA0505 0%, #D9A840 50%, #22D3EE 100%)",
+        "cta-gradient": "linear-gradient(135deg, #E23B3B 0%, #AA0505 55%, #4D0202 100%)",
+        "core-gradient": "radial-gradient(circle, #FFE9A8 0%, #D9A840 25%, #AA0505 60%, #4D0202 100%)",
+        // Full-bleed cinematic hero overlay - a deep crimson-to-black
+        // vignette laid over hero photography/video so headline text
+        // stays legible without needing a solid dark panel behind it.
+        "cinematic-overlay":
+          "linear-gradient(180deg, rgba(13,3,3,0.15) 0%, rgba(13,3,3,0.55) 55%, rgba(13,3,3,0.95) 100%), radial-gradient(ellipse at 50% 30%, rgba(170,5,5,0.25) 0%, transparent 60%)",
       },
       backgroundSize: {
         circuit: "42px 42px",
+      },
+      letterSpacing: {
+        cinematic: "0.28em",
       },
     },
   },

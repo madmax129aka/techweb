@@ -1,156 +1,155 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "../components/ui/Button";
-import TiltCard from "../components/TiltCard";
 import AnnouncementBanner from "../components/AnnouncementBanner";
 import TechAstraLogo from "../components/TechAstraLogo";
 import Polyhedron3D from "../components/Polyhedron3D";
 import VisionPillars from "../components/VisionPillars";
 import { api } from "../lib/api";
-import { useLanguage } from "../context/LanguageContext";
 
-const STATS = [
-  { label: "Events", value: "8+" },
-  { label: "Colleges", value: "50+" },
-  { label: "Participants", value: "1000+" },
-  { label: "Prize Pool", value: "₹1L+" },
+/**
+ * "Rolls-Royce cinematic" homepage: distinct full-bleed sections, each
+ * given room to breathe, rather than a dense grid of cards. One idea per
+ * screen - hero, then a single featured/flagship event, then a quiet
+ * "Explore Further" image-card row - matching the reference site's
+ * layout philosophy (rolls-roycemotorcars.com/en_GB/home.html).
+ */
+
+const EXPLORE_CARDS = [
+  {
+    to: "/events",
+    title: "Events",
+    desc: "Eight tracks of competition across a single unforgettable day.",
+    accent: "crimson",
+  },
+  {
+    to: "/register",
+    title: "Register",
+    desc: "Individual or team - secure your place before seats close.",
+    accent: "arc",
+  },
+  {
+    to: "/leaderboard",
+    title: "Leaderboard",
+    desc: "Live results as they're announced, event by event.",
+    accent: "crimson",
+  },
+  {
+    to: "/verify-certificate",
+    title: "Certificates",
+    desc: "Verify the authenticity of any TechAstra credential.",
+    accent: "arc",
+  },
 ];
 
 export default function Home() {
-  const [events, setEvents] = useState([]);
-  const { t } = useLanguage();
+  const [featured, setFeatured] = useState(null);
 
   useEffect(() => {
-    api.get("/api/events").then((data) => setEvents((data.events || []).slice(0, 4))).catch(() => {});
+    api
+      .get("/api/events")
+      .then((data) => setFeatured((data.events || [])[0] || null))
+      .catch(() => {});
   }, []);
 
   return (
     <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden border-b border-gold/10">
-        <div className="grain-overlay" />
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-[-15%] left-[-10%] w-[520px] h-[520px] bg-crimson/12 rounded-full blur-[130px]" />
-          <div className="absolute bottom-[-15%] right-[-10%] w-[520px] h-[520px] bg-arc/10 rounded-full blur-[130px]" />
-          <div className="absolute top-[30%] right-[15%] w-[300px] h-[300px] bg-gold/8 rounded-full blur-[100px]" />
-          {/* scattered twinkle dots for a "starfield / circuit node" feel */}
-          {[...Array(14)].map((_, i) => (
-            <span
-              key={i}
-              className="absolute w-1 h-1 rounded-full bg-gold-light animate-twinkle"
-              style={{
-                top: `${(i * 37) % 90}%`,
-                left: `${(i * 61) % 95}%`,
-                animationDelay: `${(i % 6) * 0.4}s`,
-              }}
-            />
-          ))}
+      {/* ================= HERO ================= */}
+      {/* Negative top margin pulls this section up behind the fixed,
+          transparent navbar (App.jsx reserves pt-[76px] on <main> for
+          every other page) so the hero image runs truly full-bleed. */}
+      <section className="section-cinematic -mt-[76px]">
+        <div className="cinematic-scrim bg-cinematic-overlay" />
+        {/* Ambient Vision Core, kept subtle and off to one side rather
+            than a centerpiece grid of stats/cards - "one idea per screen." */}
+        <div className="absolute right-[6%] top-1/2 -translate-y-1/2 opacity-70 hidden lg:block">
+          <Polyhedron3D size={340} className="animate-float-slow" />
         </div>
 
-        <div className="max-w-6xl mx-auto px-6 py-20 sm:py-28 grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center animate-hero">
-          {/* Left: copy */}
-          <div className="text-center lg:text-left">
-            <div className="flex justify-center lg:justify-start mb-6">
-              <TechAstraLogo size="lg" className="animate-gold-pulse" />
-            </div>
-
-            <p className="text-gold-light font-display font-bold tracking-[0.2em] text-xs sm:text-sm mb-4 uppercase">
-              ⚡ National Level Symposium · 2026 ⚡
-            </p>
-            <h1 className="font-serif italic text-4xl sm:text-6xl font-bold mb-5 leading-tight text-white">
-              The Future is <span className="text-gold-light not-italic font-display">VISION</span>
-            </h1>
-            <p className="text-base sm:text-lg text-white/60 mb-4 max-w-xl mx-auto lg:mx-0">
-              Six frontiers of tomorrow's technology — Virtual Intelligence, Information Security,
-              Sustainable Innovation, Intelligent Healthcare, Optimization &amp; Automation, and
-              Next-generation Networks — converge for one day of ideas, competition, and discovery.
-            </p>
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mb-12">
-              <Link to="/events">
-                <Button size="lg">🚀 {t("registerNow")}</Button>
-              </Link>
-              <Link to="/leaderboard">
-                <Button size="lg" variant="outline">🏆 View Leaderboard</Button>
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-xl mx-auto lg:mx-0">
-              {STATS.map((s) => (
-                <div key={s.label} className="glass-premium hud-corners rounded-xl py-4 px-2 text-center">
-                  <p className="font-display text-2xl sm:text-3xl font-bold text-gold-light">{s.value}</p>
-                  <p className="text-[11px] uppercase tracking-wider text-white/50 mt-1">{s.label}</p>
-                </div>
-              ))}
-            </div>
+        <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-10 text-center animate-cinematic-fade">
+          <div className="flex justify-center mb-8">
+            <TechAstraLogo size="lg" />
           </div>
+          <p className="text-arc text-[11px] sm:text-xs tracking-cinematic uppercase mb-6">
+            National Level Symposium &middot; 2026
+          </p>
+          <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl leading-[1.05] text-offwhite mb-6">
+            The Future is <span className="italic text-crimson-light">Vision</span>
+          </h1>
+          <p className="text-offwhite/60 text-sm sm:text-base max-w-xl mx-auto mb-10 leading-relaxed">
+            Virtual Intelligence. Information Security. Sustainable Innovation.
+            Intelligent Healthcare. Optimization &amp; Automation. Next-generation Networks.
+          </p>
+          <Link to="/events">
+            <Button variant="link" data-log="hero-explore-events">
+              Explore Events
+            </Button>
+          </Link>
+        </div>
 
-          {/* Right: 3D centerpiece - the "Vision Core" */}
-          <div className="relative flex items-center justify-center h-[320px] sm:h-[380px]">
-            <div className="absolute w-72 h-72 rounded-full bg-hero-gradient opacity-25 blur-3xl animate-gradient-shift" />
-            <Polyhedron3D size={240} className="animate-float-slow" />
-            <span className="absolute top-4 right-8 w-3 h-3 rounded-full bg-arc animate-float-medium shadow-arc" />
-            <span className="absolute bottom-10 left-4 w-2.5 h-2.5 rounded-full bg-crimson-light animate-float-slow shadow-crimson" />
-            <span className="absolute bottom-4 right-16 w-2 h-2 rounded-full bg-gold-light animate-float-medium shadow-gold" />
-          </div>
+        {/* Quiet scroll cue, the only other motion cue on this screen */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-60">
+          <span className="text-[10px] tracking-cinematic uppercase text-offwhite/50">Scroll</span>
+          <span className="w-px h-8 bg-offwhite/30" />
         </div>
       </section>
 
       <AnnouncementBanner />
 
-      <VisionPillars />
+      {/* ================= FEATURED EVENT ================= */}
+      {featured && (
+        <section className="section-cinematic min-h-[70vh] border-t border-crimson/10">
+          <div className="cinematic-scrim bg-gradient-to-br from-crimson/15 via-transparent to-arc/10" />
+          <div className="relative z-10 max-w-3xl mx-auto px-6 text-center animate-cinematic-fade">
+            <p className="text-arc text-[11px] tracking-cinematic uppercase mb-5">Flagship Event</p>
+            <h2 className="font-serif text-3xl sm:text-5xl text-offwhite mb-6">{featured.name}</h2>
+            <p className="text-offwhite/60 text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed">
+              {featured.description}
+            </p>
+            <Link to="/events">
+              <Button variant="link" data-log="featured-event-explore">
+                Discover More
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
 
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="divider-vision" />
-      </div>
-
-      {/* Event highlights */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="font-serif italic text-2xl sm:text-3xl font-bold text-white">
-            Event <span className="text-gold-light not-italic">Highlights</span>
-          </h2>
-          <Link to="/events" className="text-gold-light text-sm hover:underline">View all events →</Link>
+      {/* ================= EXPLORE FURTHER ================= */}
+      <section className="py-24 sm:py-32 border-t border-crimson/10">
+        <div className="max-w-6xl mx-auto px-6 mb-14 text-center">
+          <p className="text-arc text-[11px] tracking-cinematic uppercase mb-4">Explore Further</p>
+          <h2 className="font-serif text-2xl sm:text-4xl text-offwhite">Everything TechAstra, at a glance</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 [perspective:1200px]">
-          {events.length === 0 && (
-            <p className="text-white/50 col-span-full">Events will appear here once published.</p>
-          )}
-          {events.map((e) => (
-            <TiltCard key={e.id} className="p-5" maxTilt={6}>
-              <p className="text-xs text-ring-yellow font-semibold mb-1 uppercase tracking-wide">{e.track || "General"}</p>
-              <h3 className="font-heading font-bold text-lg mb-2 text-white">{e.name}</h3>
-              <p className="text-sm text-white/60 mb-3 line-clamp-2">{e.description}</p>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gold-light font-semibold">₹{e.fee}</span>
-                <span className="text-white/50">{e.seatsAvailable} seats left</span>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {EXPLORE_CARDS.map((card) => (
+            <Link
+              key={card.to}
+              to={card.to}
+              className="group relative aspect-[3/4] overflow-hidden border-r border-b border-crimson/10 last:border-r-0"
+              data-log={`explore-${card.title.toLowerCase()}`}
+            >
+              <div
+                className={`absolute inset-0 bg-gradient-to-t ${
+                  card.accent === "crimson" ? "from-crimson/40 via-crimson/5" : "from-arc/25 via-arc/5"
+                } to-transparent transition-transform duration-700 ease-out group-hover:scale-105`}
+              />
+              <div className="absolute inset-0 flex flex-col items-start justify-end p-6 sm:p-8">
+                <h3 className="font-serif text-xl sm:text-2xl text-offwhite mb-2">{card.title}</h3>
+                <p className="text-offwhite/55 text-xs sm:text-sm leading-relaxed mb-4 max-w-[220px]">
+                  {card.desc}
+                </p>
+                <span className="text-[10px] tracking-cinematic uppercase text-arc opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  Discover More &rarr;
+                </span>
               </div>
-            </TiltCard>
+            </Link>
           ))}
         </div>
       </section>
 
-      {/* Sponsors */}
-      <section className="max-w-6xl mx-auto px-6 py-12 border-t border-gold/10">
-        <h2 className="font-serif italic text-xl font-bold mb-6 text-center text-white/80">Our Sponsors</h2>
-        <div className="flex flex-wrap items-center justify-center gap-8 text-gold-light/50 text-sm">
-          <span className="px-6 py-3 border border-gold/15 rounded-lg">Sponsor Logo</span>
-          <span className="px-6 py-3 border border-gold/15 rounded-lg">Sponsor Logo</span>
-          <span className="px-6 py-3 border border-gold/15 rounded-lg">Sponsor Logo</span>
-          <span className="px-6 py-3 border border-gold/15 rounded-lg">Sponsor Logo</span>
-        </div>
-      </section>
-
-      {/* Gallery preview */}
-      <section className="max-w-6xl mx-auto px-6 py-12">
-        <h2 className="font-serif italic text-xl font-bold mb-6 text-center text-white/80">Gallery</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="aspect-square rounded-xl bg-white/5 border border-gold/10 flex items-center justify-center text-white/30 text-xs">
-              Photo {i}
-            </div>
-          ))}
-        </div>
-      </section>
+      <VisionPillars />
     </div>
   );
 }

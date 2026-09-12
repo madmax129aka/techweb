@@ -26,7 +26,15 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1">
+      {/*
+        The navbar is now `fixed` (so it can transparently overlay hero
+        imagery, per the cinematic layout). That means normal page flow
+        needs top padding to avoid content sitting underneath it - EXCEPT
+        the homepage, whose hero is deliberately meant to run full-bleed
+        behind the transparent nav. Home.jsx compensates for this itself
+        with a matching negative top margin on its hero section.
+      */}
+      <main className="flex-1 pt-[76px]">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/events" element={<Events />} />

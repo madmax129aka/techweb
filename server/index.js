@@ -6,6 +6,7 @@ const path = require("path");
 const { Server } = require("socket.io");
 
 const { initSocket } = require("./socket");
+const requestLogger = require("./middleware/requestLogger");
 
 const authRoutes = require("./routes/auth");
 const eventRoutes = require("./routes/events");
@@ -20,6 +21,7 @@ const helpRoutes = require("./routes/help");
 const adminRoutes = require("./routes/admin");
 const volunteerRoutes = require("./routes/volunteer");
 const upiRoutes = require("./routes/upi");
+const logRoutes = require("./routes/logs");
 
 const app = express();
 const server = http.createServer(app);
@@ -33,6 +35,7 @@ initSocket(io);
 
 app.use(cors({ origin: clientOrigin }));
 app.use(express.json({ limit: "10mb" }));
+app.use(requestLogger);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/api/health", (req, res) => res.json({ status: "ok", time: new Date().toISOString() }));
@@ -50,6 +53,7 @@ app.use("/api/help", helpRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/volunteer", volunteerRoutes);
 app.use("/api/upi", upiRoutes);
+app.use("/api/logs", logRoutes);
 
 // Centralized error handler (e.g. multer file-size/type errors)
 app.use((err, req, res, next) => {
@@ -59,5 +63,8 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
-  console.log(`TechAstra API listening on port ${PORT}`);
+  console.log(`\nTechAstra API listening on port ${PORT}`);
+  console.log(
+    "Every API request AND every click on the frontend will be logged below (see server/middleware/requestLogger.js and client/src/lib/clickLogger.js).\n"
+  );
 });

@@ -2,11 +2,19 @@ import React from "react";
 
 const VARIANTS = {
   primary:
-    "relative overflow-hidden bg-cta-gradient text-white font-bold shadow-crimson hover:shadow-crimson-lg border border-crimson-light/50 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]",
-  secondary: "bg-arc text-onyx font-bold hover:bg-arc-light shadow-arc",
-  outline: "border border-crimson/40 text-crimson-light hover:border-crimson hover:bg-crimson/10 bg-transparent",
-  danger: "bg-danger text-white hover:bg-danger/80",
-  ghost: "bg-transparent text-white hover:bg-white/10",
+    "relative overflow-hidden bg-cta-gradient text-white font-bold shadow-crimson hover:shadow-crimson-lg border border-crimson-light/50 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] rounded-xl uppercase",
+  secondary: "bg-arc text-onyx font-bold hover:bg-arc-light shadow-arc rounded-xl uppercase",
+  outline: "border border-crimson/40 text-crimson-light hover:border-crimson hover:bg-crimson/10 bg-transparent rounded-xl uppercase",
+  danger: "bg-danger text-white hover:bg-danger/80 rounded-xl uppercase",
+  ghost: "bg-transparent text-white hover:bg-white/10 rounded-xl uppercase",
+  // Understated underlined text-link CTA ("EXPLORE EVENTS" style), for
+  // cinematic hero/section calls-to-action - per the "Rolls-Royce" layout
+  // brief, hero CTAs should read as a quiet text link, not a filled
+  // button. Filled variants above are kept as-is for portal/form usability
+  // (approve/reject, submit, generate, etc.) where a clear button affordance
+  // still matters. Reuses the .link-cta CSS utility (index.css) so the
+  // exact same treatment is available outside the Button component too.
+  link: "link-cta !p-0 !rounded-none bg-transparent",
 };
 
 const SIZES = {
@@ -24,14 +32,16 @@ export default function Button({
   type = "button",
   ...props
 }) {
+  const isLink = variant === "link";
+
   return (
     <button
       type={type}
       disabled={disabled}
       className={`
-        inline-flex items-center justify-center gap-2 rounded-xl font-semibold uppercase text-xs sm:text-sm
+        inline-flex items-center justify-center gap-2 font-semibold
         transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed
-        ${VARIANTS[variant]} ${SIZES[size]} ${className}
+        ${isLink ? "" : "text-xs sm:text-sm"} ${VARIANTS[variant]} ${isLink ? "" : SIZES[size]} ${className}
       `}
       {...props}
     >
@@ -41,7 +51,10 @@ export default function Button({
           className="pointer-events-none absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/40 to-transparent w-1/3"
         />
       )}
-      <span className="relative z-10 flex items-center gap-2">{children}</span>
+      <span className="relative z-10 flex items-center gap-2">
+        {children}
+        {isLink && <span aria-hidden="true">&rarr;</span>}
+      </span>
     </button>
   );
 }
