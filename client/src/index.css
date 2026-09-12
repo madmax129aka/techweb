@@ -208,6 +208,19 @@ h1, h2, h3, h4, h5, h6 {
   animation: rotate3d 18s linear infinite;
 }
 
+/* Keeps a ring tilted (via the --tilt custom property, set inline per
+   ring) while continuously spinning it around the Y-axis. Because the
+   X-tilt is held constant and rotateY changes which "edge" of the ring
+   faces the viewer, this is what makes a flat circle read as a tumbling
+   3D ring that sweeps in front of / behind the sphere - the classic
+   "Saturn's rings" CSS illusion. The animation fully owns `transform`
+   here (no separate inline transform on the same element), avoiding any
+   inline-vs-animation transform conflict. */
+@keyframes ringOrbit {
+  from { transform: rotateX(var(--tilt, 70deg)) rotateY(0deg); }
+  to { transform: rotateX(var(--tilt, 70deg)) rotateY(360deg); }
+}
+
 @keyframes floatSlow {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-16px) rotate(2deg); }
