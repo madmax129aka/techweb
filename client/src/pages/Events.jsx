@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
-import Modal from "../components/ui/Modal";
 import { api } from "../lib/api";
 import { useCart } from "../context/CartContext";
 
@@ -11,11 +9,19 @@ function formatTime(iso) {
   return new Date(iso).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" });
 }
 
+/**
+ * Events page, restyled to match the rest of the "Rolls-Royce cinematic"
+ * site instead of the old boxed-card SaaS look: a quiet header section,
+ * then a grid of large, borderless, image-led cards (same visual language
+ * as Home.jsx's "Explore Further" row). Each card is fully clickable
+ * through to the event's story page (EventDetail, /events/:id); Add/Remove
+ * from Cart is a separate control in the card footer so it isn't nested
+ * inside the card's own link.
+ */
 export default function Events() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [rulebookEvent, setRulebookEvent] = useState(null);
-  const { items, addItem } = useCart();
+  const { items, addItem, removeItem } = useCart();
 
   useEffect(() => {
     api
@@ -24,6 +30,8 @@ export default function Events() {
       .catch(() => toast.error("Failed to load events"))
       .finally(() => setLoading(false));
   }, []);
+
+  const inCart = (id) => items.some((i) => i.id === id);
 
   const handleAdd = (event) => {
     const result = addItem(event);
@@ -34,76 +42,109 @@ export default function Events() {
     }
   };
 
-  const inCart = (id) => items.some((i) => i.id === id);
+  const handleRemove = (event) => {
+    removeItem(event.id);
+    toast.success(`${event.name} removed from cart`);
+  };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12">
-      <h1 className="font-heading text-3xl font-bold mb-2">Events</h1>
-      <p className="text-white/60 mb-8">
-        Times are shown so clashes are obvious at a glance — the cart will block you from adding two overlapping events.
-      </p>
+    <div>
+      {/* Header */}
+      <section className="border-b border-crimson/10 py-20 sm:py-28 text-center px-6">
+        <p className="text-arc text-[11px] tracking-cinematic uppercase mb-4">Eight Tracks. One Day.</p>
+        <h1 className="font-serif text-3xl sm:text-5xl text-offwhite mb-5">Events</h1>
+        <p className="text-offwhite/55 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+          Times are shown so clashes are obvious at a glance &mdash; adding an event that overlaps
+          one already in your cart is blocked automatically.
+        </p>
+      </section>
 
-      {loading && <p className="text-white/50">Loading events...</p>}
+      {loading && (
+        <p className="text-offwhite/50 text-center py-20">Loading events...</p>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {events.map((event) => {
+      {/* Card grid - large, borderless, image-led, matching Explore Further */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {events.map((event, i) => {
           const full = event.seatsAvailable <= 0;
+          const added = inCart(event.id);
+          const accent = i % 2 === 0 ? "crimson" : "arc";
+
           return (
-            <Card key={event.id} className="flex flex-col">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-violet">{event.track || "General"}</span>
-                {event.isTeamEvent && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70">Team Event</span>
-                )}
-              </div>
+            <div
+              key={event.id}
+              className="group relative flex flex-col border-r border-b border-crimson/10"
+            >
               <Link
                 to={`/events/${event.id}`}
-                className="font-heading font-bold text-lg mb-1 hover:text-arc transition-colors"
-                data-log={`events-view-detail-${event.id}`}
+                className="relative aspect-[4/5] overflow-hidden block"
+                data-log={`events-card-open-${event.id}`}
               >
-                {event.name}
-              </Link>
-              <p className="text-sm text-white/60 mb-3 flex-1">{event.description}</p>
+                <div
+                  className={`absolute inset-0 bg-gradient-to-t ${
+                    accent === "crimson" ? "from-crimson/40 via-crimson/5" : "from-arc/25 via-arc/5"
+                  } to-transparent transition-transform duration-700 ease-out group-hover:scale-105`}
+                />
 
-              <div className="text-sm text-white/70 mb-3 space-y-1">
-                <p>🕒 {formatTime(event.startTime)} — {formatTime(event.endTime)}</p>
-                <p>📍 {event.venue || "TBA"}</p>
-                <p>💺 {event.seatsAvailable} / {event.maxSeats} seats left</p>
-              </div>
+                {event.isTeamEvent && (
+                  <span className="absolute top-5 right-5 text-[10px] uppercase tracking-cinematic text-offwhite/70 border border-offwhite/20 px-2 py-1">
+                    Team
+                  </span>
+                )}
 
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-cyan font-bold text-lg">₹{event.fee}</span>
-                <div className="flex items-center gap-3">
-                  {event.rulebook && (
-                    <button
-                      className="text-xs text-white/60 hover:text-cyan underline"
-                      onClick={() => setRulebookEvent(event)}
-                    >
-                      Rulebook
-                    </button>
-                  )}
-                  <Link to={`/events/${event.id}`} className="text-xs text-white/60 hover:text-cyan underline">
-                    View Details
-                  </Link>
+                <div className="absolute inset-0 flex flex-col items-start justify-end p-6 sm:p-8">
+                  <p className="text-[10px] tracking-cinematic uppercase text-arc mb-2">
+                    {event.track || "General"}
+                  </p>
+                  <h3 className="font-serif text-xl sm:text-2xl text-offwhite mb-2">{event.name}</h3>
+                  <p className="text-offwhite/55 text-xs sm:text-sm leading-relaxed mb-4 max-w-[240px] line-clamp-2">
+                    {event.description}
+                  </p>
+                  <div className="text-offwhite/45 text-[11px] space-y-0.5 mb-3">
+                    <p>{formatTime(event.startTime)} &mdash; {formatTime(event.endTime)}</p>
+                    <p>{event.venue || "Venue TBA"}</p>
+                  </div>
+                  <span className="text-[10px] tracking-cinematic uppercase text-arc opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    View Details &rarr;
+                  </span>
                 </div>
-              </div>
+              </Link>
 
-              <Button
-                variant={inCart(event.id) ? "outline" : "primary"}
-                disabled={full || inCart(event.id)}
-                onClick={() => handleAdd(event)}
-                className="w-full"
-              >
-                {full ? "Seats Full" : inCart(event.id) ? "In Cart" : "Add to Cart"}
-              </Button>
-            </Card>
+              {/* Footer - price, seats, cart control. Deliberately a sibling
+                  of the Link above (not nested inside it) so the Add/Remove
+                  button stays its own clickable target. */}
+              <div className="flex items-center justify-between gap-4 px-6 sm:px-8 py-4 bg-void">
+                <div>
+                  <p className="font-serif text-lg text-offwhite">&#8377;{event.fee}</p>
+                  <p className="text-offwhite/40 text-[11px]">
+                    {full ? "Seats full" : `${event.seatsAvailable} of ${event.maxSeats} left`}
+                  </p>
+                </div>
+
+                {added ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRemove(event)}
+                    data-log={`events-remove-cart-${event.id}`}
+                  >
+                    Remove
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    disabled={full}
+                    onClick={() => handleAdd(event)}
+                    data-log={`events-add-cart-${event.id}`}
+                  >
+                    {full ? "Full" : "Add to Cart"}
+                  </Button>
+                )}
+              </div>
+            </div>
           );
         })}
       </div>
-
-      <Modal open={!!rulebookEvent} onClose={() => setRulebookEvent(null)} title={rulebookEvent?.name + " — Rulebook"}>
-        <p className="text-white/80 text-sm whitespace-pre-line">{rulebookEvent?.rulebook}</p>
-      </Modal>
     </div>
   );
 }
