@@ -378,6 +378,19 @@ h1, h2, h3, h4, h5, h6 {
   animation: menuFadeIn 0.5s ease both;
 }
 
+/* Right-panel image crossfade for the split-screen mega-menu (Section
+   5D): the <img> is re-keyed by src so React remounts it on each change,
+   and this fade-in on the fresh element - over the dark #0F1424 panel
+   behind it - reads as a smooth crossfade rather than a hard swap. Kept
+   short (220ms) per the brief's "instant" feel. */
+@keyframes menuImageFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-menu-image-fade {
+  animation: menuImageFade 0.22s ease-out both;
+}
+
 /* ============================================================
    Slide-in form panels ("forms as overlays, not pages" pattern)
    ============================================================ */

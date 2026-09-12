@@ -38,6 +38,7 @@ model Event {
   name          String
   description   String
   track         String?
+  category      String   @default("technical") // technical | non_technical
   startTime     DateTime
   endTime       DateTime
   fee           Float

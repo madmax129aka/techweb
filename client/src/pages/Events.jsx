@@ -20,9 +20,16 @@ function formatTime(iso) {
  * from Cart is a separate control in the card footer so it isn't nested
  * inside the card's own link.
  */
+const CATEGORY_FILTERS = [
+  { key: "all", label: "All Events" },
+  { key: "technical", label: "Technical" },
+  { key: "non_technical", label: "Non-Technical" },
+];
+
 export default function Events() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const { items, addItem, removeItem } = useCart();
 
   useEffect(() => {
@@ -34,6 +41,15 @@ export default function Events() {
   }, []);
 
   const inCart = (id) => items.some((i) => i.id === id);
+
+  // Reuse the same `category` field that drives the mega-menu split, so
+  // the Technical/Non-Technical distinction is consistent everywhere.
+  const visibleEvents =
+    categoryFilter === "all"
+      ? events
+      : events.filter(
+          (e) => (e.category === "non_technical" ? "non_technical" : "technical") === categoryFilter
+        );
 
   const handleAdd = (event) => {
     const result = addItem(event);
@@ -55,19 +71,43 @@ export default function Events() {
       <section className="border-b border-crimson/10 py-20 sm:py-28 text-center px-6">
         <p className="text-arc text-[11px] tracking-cinematic uppercase mb-4">Eight Tracks. One Day.</p>
         <h1 className="font-serif text-3xl sm:text-5xl text-offwhite mb-5">Events</h1>
-        <p className="text-offwhite/55 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+        <p className="text-offwhite/55 text-sm sm:text-base max-w-xl mx-auto leading-relaxed mb-10">
           Times are shown so clashes are obvious at a glance &mdash; adding an event that overlaps
           one already in your cart is blocked automatically.
         </p>
+
+        {/* Technical / Non-Technical filter - same category split as the
+            mega-menu. Understated text tabs, not filled buttons, to match
+            the cinematic language. */}
+        <div className="flex items-center justify-center gap-8">
+          {CATEGORY_FILTERS.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setCategoryFilter(f.key)}
+              className={`text-[11px] tracking-cinematic uppercase pb-2 border-b transition-colors ${
+                categoryFilter === f.key
+                  ? "text-arc border-arc"
+                  : "text-offwhite/50 border-transparent hover:text-offwhite"
+              }`}
+              data-log={`events-filter-${f.key}`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
       </section>
 
       {loading && (
         <p className="text-offwhite/50 text-center py-20">Loading events...</p>
       )}
 
+      {!loading && visibleEvents.length === 0 && (
+        <p className="text-offwhite/50 text-center py-20">No events in this category yet.</p>
+      )}
+
       {/* Card grid - large, borderless, image-led, matching Explore Further */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {events.map((event, i) => {
+        {visibleEvents.map((event, i) => {
           const full = event.seatsAvailable <= 0;
           const added = inCart(event.id);
           const accent = i % 2 === 0 ? "crimson" : "arc";

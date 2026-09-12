@@ -35,7 +35,7 @@ router.get("/:id", async (req, res) => {
 router.post("/", requireAuth, requireRole("master_admin"), async (req, res) => {
   try {
     const {
-      name, description, track, startTime, endTime, fee, maxSeats,
+      name, description, track, category, startTime, endTime, fee, maxSeats,
       isTeamEvent, minTeamSize, maxTeamSize, rulebook, venue,
     } = req.body;
 
@@ -43,11 +43,15 @@ router.post("/", requireAuth, requireRole("master_admin"), async (req, res) => {
       return res.status(400).json({ error: "name, startTime, endTime, fee and maxSeats are required" });
     }
 
+    // Normalize category to the two allowed values; default to technical.
+    const normalizedCategory = category === "non_technical" ? "non_technical" : "technical";
+
     const event = await prisma.event.create({
       data: {
         name,
         description: description || "",
         track,
+        category: normalizedCategory,
         startTime: new Date(startTime),
         endTime: new Date(endTime),
         fee: Number(fee),
@@ -74,6 +78,10 @@ router.put("/:id", requireAuth, requireRole("master_admin"), async (req, res) =>
     if (data.endTime) data.endTime = new Date(data.endTime);
     if (data.fee !== undefined) data.fee = Number(data.fee);
     if (data.maxSeats !== undefined) data.maxSeats = Number(data.maxSeats);
+    // Only ever allow the two valid category values through an edit.
+    if (data.category !== undefined) {
+      data.category = data.category === "non_technical" ? "non_technical" : "technical";
+    }
     delete data.id;
     delete data.seatsTaken;
 

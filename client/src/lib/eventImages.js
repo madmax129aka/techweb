@@ -40,6 +40,19 @@ export const EVENT_IMAGES = {
   "Web Design Contest": UNSPLASH("1467232004584-a241de8bcf5d"), // code editor, blue tones
   "Poster Presentation": UNSPLASH("1531482615713-2afd69097998"), // exhibition / conference hall
   "Startup Pitch": UNSPLASH("1519389950473-47ba0277781c"), // team meeting around a table
+  "Treasure Hunt": UNSPLASH("1533230408708-8f9f91d1235a"), // map / compass / exploration
+  "Gaming Tournament": UNSPLASH("1542751371-adc38448a05e"), // gaming setup / controller glow
+  "Photography Contest": UNSPLASH("1452587925148-ce544e77e70d"), // camera / photography
+};
+
+/**
+ * Generic cover images for the mega-menu's category headers
+ * (Section 5D). Shown on the right image panel when a user hovers
+ * "Technical" / "Non-Technical" before drilling into a specific event.
+ */
+export const CATEGORY_IMAGES = {
+  technical: UNSPLASH("1518770660439-4636190af475", 1600, 75), // circuit board / hardware
+  non_technical: UNSPLASH("1523580494863-6f3031224c94", 1600, 75), // audience / crowd energy
 };
 
 /** Generic fallback for any event name not explicitly mapped above (e.g. once real events replace the seed data). */
