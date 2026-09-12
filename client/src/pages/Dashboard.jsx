@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
-import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import { Textarea, Select } from "../components/ui/Input";
 import IdCard from "../components/IdCard";
@@ -69,13 +68,22 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
-      <h1 className="font-heading text-3xl font-bold mb-2">Welcome, {user?.name}</h1>
-      <p className="text-white/60 mb-8">{user?.collegeName}</p>
+    <div className="max-w-4xl mx-auto px-6 py-14">
+      <p className="text-arc text-[11px] tracking-cinematic uppercase mb-3">My Dashboard</p>
+      <h1 className="font-serif text-3xl sm:text-4xl text-offwhite mb-2">Welcome, {user?.name}</h1>
+      <p className="text-offwhite/50 mb-10">{user?.collegeName}</p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         <div>
-          <h2 className="font-heading text-xl font-semibold mb-4">Your Digital ID Card</h2>
+          <h2 className="font-heading text-sm uppercase tracking-wider text-offwhite/70 mb-4">Your Digital ID Card</h2>
+          {/*
+            IdCard.jsx deliberately keeps its own gold/black scheme
+            (matches the physical/logo branding, independent of the
+            site's crimson/arc theme) and its html2canvas/jsPDF export
+            below - both untouched here per the brief, since that export
+            alignment bug was already fixed in an earlier session and
+            must not regress.
+          */}
           <IdCard
             ref={cardRef}
             registration={registration || { registrationCode: "Pending sync" }}
@@ -83,23 +91,23 @@ export default function Dashboard() {
             events={events.filter((e) => registration?.eventIds?.includes?.(e.id))}
           />
           <Button className="w-full mt-4" onClick={downloadIdCard}>Download as PDF</Button>
-          <p className="text-xs text-white/40 mt-2 text-center">
+          <p className="text-xs text-offwhite/40 mt-3 text-center">
             Show this QR at event check-in and food counters.
           </p>
         </div>
 
-        <div className="space-y-6">
-          <Card>
-            <h2 className="font-heading text-xl font-semibold mb-3">Your Certificates</h2>
+        <div className="space-y-10">
+          <div>
+            <h2 className="font-heading text-sm uppercase tracking-wider text-offwhite/70 mb-4">Your Certificates</h2>
             {certificates.length === 0 ? (
-              <p className="text-white/50 text-sm">No certificates issued yet. Check back after your events conclude.</p>
+              <p className="text-offwhite/45 text-sm">No certificates issued yet. Check back after your events conclude.</p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="divide-y divide-crimson/10 border-t border-b border-crimson/10">
                 {certificates.map((c) => (
-                  <li key={c.id} className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-2">
-                    <span className="text-sm capitalize">{c.type} — {c.certificateCode}</span>
+                  <li key={c.id} className="flex items-center justify-between px-1 py-3">
+                    <span className="text-sm text-offwhite/80 capitalize">{c.type} &mdash; {c.certificateCode}</span>
                     {c.pdfUrl && (
-                      <a href={`${api.baseUrl}${c.pdfUrl}`} target="_blank" rel="noreferrer" className="text-gold-light text-sm underline">
+                      <a href={`${api.baseUrl}${c.pdfUrl}`} target="_blank" rel="noreferrer" className="text-arc text-sm hover:underline">
                         Download
                       </a>
                     )}
@@ -107,10 +115,10 @@ export default function Dashboard() {
                 ))}
               </ul>
             )}
-          </Card>
+          </div>
 
-          <Card>
-            <h2 className="font-heading text-xl font-semibold mb-3">Event Feedback</h2>
+          <div>
+            <h2 className="font-heading text-sm uppercase tracking-wider text-offwhite/70 mb-4">Event Feedback</h2>
             <form onSubmit={submitFeedback} className="space-y-3">
               <Select value={feedbackEventId} onChange={(e) => setFeedbackEventId(e.target.value)}>
                 <option value="">Select an event</option>
@@ -126,7 +134,7 @@ export default function Dashboard() {
               <Textarea rows={3} placeholder="Comments (optional)" value={comments} onChange={(e) => setComments(e.target.value)} />
               <Button type="submit" className="w-full">Submit Feedback</Button>
             </form>
-          </Card>
+          </div>
         </div>
       </div>
     </div>
