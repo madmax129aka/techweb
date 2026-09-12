@@ -165,3 +165,91 @@ h1, h2, h3, h4, h5, h6 {
 .animate-live-pulse {
   animation: livePulse 1.6s ease-out infinite;
 }
+
+/* ============================================================
+   Rich / elegant "VISION" theme additions - 3D + premium surfaces
+   ============================================================ */
+
+/* Perspective containers - Tailwind's core doesn't ship a perspective
+   utility, so these are plain CSS classes applied to 3D parents. */
+.perspective-800 { perspective: 800px; }
+.perspective-1200 { perspective: 1200px; }
+.perspective-1600 { perspective: 1600px; }
+
+.preserve-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; }
+
+/* Elegant glass surface with a subtle inner highlight, richer than .glass */
+.glass-premium {
+  background: linear-gradient(160deg, rgba(24, 22, 17, 0.75) 0%, rgba(11, 10, 8, 0.85) 100%);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(217, 168, 64, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 20px 40px -20px rgba(0, 0, 0, 0.6);
+}
+
+/* Subtle film-grain overlay for a premium, textured feel */
+.grain-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+@keyframes rotate3d {
+  from { transform: rotateY(0deg) rotateX(8deg); }
+  to { transform: rotateY(360deg) rotateX(8deg); }
+}
+.animate-rotate-3d {
+  animation: rotate3d 18s linear infinite;
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-16px) rotate(2deg); }
+}
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+@keyframes floatMedium {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-float-medium {
+  animation: floatMedium 4.5s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.7s ease-out both;
+}
+
+/* Elegant divider - a thin gradient rule used between sections */
+.divider-vision {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217, 168, 64, 0.5), transparent);
+}
+
+/* Tilt card wrapper - the transform itself is applied inline via JS
+   (pointer position), this just sets up the transition + will-change. */
+.tilt-card {
+  transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+  will-change: transform;
+}
