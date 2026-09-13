@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import TechAstraLogo from "./TechAstraLogo";
 import FullScreenMenu from "./FullScreenMenu";
+import CoreWatermark from "./CoreWatermark";
 
 const PORTAL_PATH = {
   registration_team: "/registration-team",
@@ -63,9 +64,19 @@ export default function Navbar() {
           {/* Logo now links to /events, not "/" - this app has no
               homepage of its own (see the scope-correction note in
               App.jsx); /events IS the entry point, so this is just the
-              more direct target ("/" still redirects here anyway). */}
-          <Link to="/events" className="flex items-center" data-log="nav-logo">
+              more direct target ("/" still redirects here anyway).
+
+              Section 5C secondary placement: a small, static
+              (non-orbiting) watermark of just the core gem sits right
+              beside the wordmark - the header's visual "corner", without
+              being absolutely positioned (which risked overlapping the
+              cart/dashboard/hamburger cluster on the opposite side at
+              narrower "sm+" widths). Hidden below `sm` since there isn't
+              room for a purely decorative extra element next to the
+              logo on small screens. */}
+          <Link to="/events" className="flex items-center gap-2.5" data-log="nav-logo">
             <TechAstraLogo size="sm" />
+            <CoreWatermark size={26} className="hidden sm:block" />
           </Link>
 
           {/* Leaderboard link removed - that page now lives on the

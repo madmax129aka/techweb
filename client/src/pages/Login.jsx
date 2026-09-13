@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import Button from "../components/ui/Button";
-import CinematicImage from "../components/CinematicImage";
+import TechAstraCore from "../components/TechAstraCore";
 import { Label, Input } from "../components/ui/Input";
-import { HERO_IMAGES } from "../lib/eventImages";
 import { useAuth } from "../context/AuthContext";
 
 const PORTAL_PATH = {
@@ -18,10 +17,12 @@ const PORTAL_PATH = {
 };
 
 /**
- * Cinematic split layout: a full-bleed themed photo on one side (hidden
- * on small screens, where the form alone fills the page), plain form on
- * the other - consistent with the photo-backdrop treatment used across
- * the rest of the site rather than the old centered boxed Card.
+ * Cinematic split layout - Section 5C's primary placement: the
+ * "TechAstra Core" 3D orbiting-stone symbol is the centerpiece on one
+ * side (hidden on small screens, where the form alone fills the page),
+ * plain form on the other. Previously this side showed a themed photo
+ * backdrop; that's been replaced by the 3D object per the brief
+ * ("form on one side, 3D object on the other").
  */
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -46,12 +47,26 @@ export default function Login() {
 
   return (
     <div className="min-h-[calc(100vh-76px)] grid lg:grid-cols-2">
-      {/* Photo backdrop - hidden below lg, where the form takes the full page */}
-      <div className="relative hidden lg:block">
-        <CinematicImage src={HERO_IMAGES.intro} alt="" accent="crimson" zoomOnHover={false} />
-        <div className="relative z-10 h-full flex flex-col justify-end p-14">
+      {/* TechAstra Core centerpiece - hidden below lg, where the form
+          takes the full page (the 3D object needs real room to breathe;
+          it isn't worth shrinking down for a phone-width column). */}
+      <div className="relative hidden lg:flex flex-col items-center justify-center bg-void overflow-hidden">
+        {/* Ambient radial glow behind the object, echoing the core's own
+            cyan/crimson attenuation colors - gives the object a "resting
+            place" rather than floating on a flat void background. */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 45%, rgba(34,211,238,0.12) 0%, rgba(170,5,5,0.08) 45%, transparent 75%)",
+          }}
+        />
+        <div className="relative z-10">
+          <TechAstraCore size={380} />
+        </div>
+        <div className="relative z-10 text-center px-14 mt-4">
           <p className="text-arc text-[11px] tracking-cinematic uppercase mb-4">TechAstra &middot; 2026</p>
-          <h2 className="font-serif text-3xl text-offwhite leading-tight max-w-sm">
+          <h2 className="font-serif text-3xl text-offwhite leading-tight max-w-sm mx-auto">
             One symposium. Eight tracks. A single unforgettable day.
           </h2>
         </div>

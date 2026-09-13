@@ -1,40 +1,198 @@
 # TechAstra Registration Portal - Design Brief
 
 > **Provenance note:** this document captures the design brief as
-> supplied piecemeal across a long chat session, starting from Section
-> 5D onward. Sections 1-3 and 5A-5C were referenced by earlier messages
-> in that conversation but their exact original text was never re-supplied
-> to (or preserved by) the agent that wrote this file, so they are not
-> reproduced here. If those sections are needed, they should be re-added
-> from whatever earlier source has them. Everything below (the scope
-> correction, Section 4, Section 5D through 5G) is transcribed as given.
+> supplied piecemeal across a long chat session. Sections 1-3, 5A, and 5B
+> were referenced by earlier messages in that conversation but their
+> exact original text was never re-supplied to (or preserved by) the
+> agent that wrote this file, so they are not reproduced here. If those
+> sections are needed, they should be re-added from whatever earlier
+> source has them. Everything below (the scope note, Section 4, Section
+> 5C through 5G) is transcribed as given, including one later correction
+> to the scope note itself (see below).
 
 ---
 
-## SCOPE NOTE (supersedes any earlier full-site assumptions)
+## SCOPE NOTE (revised - supersedes an earlier, stricter version of this note)
 
-This build is **ONLY the Registration Portal sub-application** for
-TechAstra. A separate team is building the main marketing website
-(homepage, hero banners, event storytelling, sponsors, photo gallery).
-This app is what opens when a visitor clicks "Register" on that main
-site - so:
+This build is the **Registration Portal + ALL role-based login portals**
+for TechAstra - that responsibility (every login: Participant,
+Registration Team, Event Coordinator, Hospitality, Certificate Team,
+Volunteer, Master Admin) belongs to this app and stays exactly as
+originally specified. None of those logins/portals were ever removed or
+simplified.
 
-- Do **not** build a marketing homepage, hero carousel, sponsor section,
-  or photo gallery. This app's entry point is the Events listing page.
-- Do **not** include a public Gallery page or a public Leaderboard/results
-  page in this app - those live on the main website instead.
-- This app starts directly at Events (Technical/Non-Technical) and
-  covers: browsing events -> cart -> registration -> checkout/payment
-  verification -> login -> dashboard/ID card, plus all backend role
-  portals (Registration Team, Event Coordinator, Hospitality, Certificate
-  Team, Volunteer, Master Admin).
-- Keep the app linkable/embeddable - assume it may be opened in a new tab
-  or an iframe from the main site's "Register" button, so don't assume it
-  needs its own full brand storytelling.
+The **only** thing out of scope is the marketing front-page content: the
+hero carousel/banner, sponsor section, and photo gallery on the
+homepage - those are built separately by another team on the main
+website. This app's own front page (Events) does not need a hero banner.
+
+**Unchanged from the original brief:**
+- Participant Login (`/login`) - stays exactly as designed, post-approval
+  access to Dashboard/ID card
+- Registration Team Portal login
+- Event Coordinator Portal login
+- Hospitality Portal login
+- Certificate Portal login
+- Volunteer Portal login
+- Master Admin Portal login
+- Dashboard, ID Card, Status tracking, Certificate Verification - all
+  unchanged
+
+**Removed only:**
+- Homepage hero/carousel banner
+- Public Gallery page
+- Public Leaderboard page (coordinators still submit results internally
+  via `/coordinator`; that data can later be exposed via an API for the
+  main website's own Leaderboard/Gallery pages, but this app does not
+  render those pages itself)
+
+Entry point for this app is still `/events` (Technical/Non-Technical
+listing) as the first screen, with Login accessible from the
+header/menu same as before.
+
+> **Correction history:** an earlier pass at this note read more like
+> "this app is the Registration Portal *only*" and, taken too literally
+> by the agent implementing it, led to briefly treating the whole app as
+> narrower than intended - nothing was actually deleted incorrectly (all
+> logins/portals were always left in place), but the note above is the
+> authoritative, corrected version and should be treated as such.
 
 ---
 
-## 4. PAGES & USER FLOW (Registration Portal only)
+## 5C. TECHASTRA CORE - 3D ORBITING STONE SYMBOL
+
+**CONCEPT** (original design, not a reproduction of any copyrighted
+character or franchise symbol): a central glowing crystal core with six
+smaller gemstones orbiting around it on tilted elliptical paths, each
+stone a different color, representing the different event tracks/energy
+of TechAstra. Do not name, label, or design this after any existing
+copyrighted character, film, or franchise - keep all naming original
+("TechAstra Core", "Nexus Stone", etc.) and keep the geometry/material
+generic (faceted gem shapes), not a copy of any specific trademarked
+design.
+
+**PLACEMENT IN THIS APP:**
+- Primary placement: Login page, as a centerpiece visual behind/beside
+  the login form (form on one side, 3D object on the other, or object
+  centered above the form)
+- Secondary (optional): a small, static (non-orbiting) version of just
+  the core gem as a subtle corner watermark in the header, present
+  across all pages, reinforcing brand identity without being distracting
+
+**STRUCTURE:**
+- 1 central "core" object: an icosahedron or dodecahedron, larger than
+  the orbiting stones, using `MeshTransmissionMaterial` or
+  `MeshPhysicalMaterial` (`transmission: 1, roughness: 0.1, thickness: 0.8,
+  ior: 1.45`) - clear/glass-like with a faint white-cyan inner glow (add
+  a small emissive point light inside the core mesh)
+- 6 smaller "stones" orbiting the core, each a smaller faceted gem
+  (octahedron or low-poly icosahedron), each a distinct color using
+  `MeshPhysicalMaterial` with emissive glow, e.g.: cyan (Technical
+  track), magenta/violet (Non-Technical track), amber/gold
+  (Hackathon/flagship), green (Robotics), red (Gaming/Esports), blue
+  (Design/Creative) - colors are illustrative, align to whatever event
+  categories/branding TechAstra actually uses
+
+**ORBIT ANIMATION:**
+- Each stone follows its own elliptical orbit path around the core, each
+  tilted at a different angle (`x = radius * cos(t), z = radius * sin(t)
+  * tiltFactor` in `useFrame`, with a unique radius, speed, and phase
+  offset per stone so they don't move in sync)
+- Orbit speed: slow and continuous, each stone taking 15-40 seconds per
+  full revolution (vary per stone for visual richness)
+- Core itself: slow independent rotation on its own axis (~30s per
+  revolution) plus a very subtle pulsing scale (1.0 to 1.03) on a sine
+  wave, like a heartbeat/breathing effect
+- Each stone also spins on its own axis as it orbits, independent of its
+  orbital motion
+
+**LIGHTING & GLOW:**
+- Use drei's `<Environment preset="night">` or `"studio"` for realistic
+  glass refraction
+- Add a bloom post-processing pass (`@react-three/postprocessing`'s
+  `<Bloom>`) tuned subtly (intensity 0.4-0.8) so the stones and core have
+  a soft glow halo, not an overblown flare
+- Each stone's emissive color should bloom slightly in its own hue
+
+**INTERACTION:**
+- On mouse move (desktop), apply a very subtle parallax tilt to the
+  entire group (core + stones) based on cursor position, so it feels
+  alive/responsive without being distracting
+- On mobile, skip the parallax (no mouse) - just keep the ambient
+  orbit/rotation animation
+
+**PERFORMANCE & FALLBACK:**
+- Cap dpr to `[1,2]`, pause animation via `IntersectionObserver` when
+  off-screen, respect `prefers-reduced-motion` (render a static single
+  frame if reduced motion is set)
+- Wrap in an error boundary; on WebGL failure, fall back to a static
+  glass-orb PNG/SVG graphic in the same layout position
+
+**DO NOT:**
+- Do not label this component, its file, or any UI text with "Marvel",
+  "Vision", "Infinity Stones", or any other third-party trademarked name
+  - keep all naming and exact visual design original to avoid IP issues.
+
+### Implementation notes (as built)
+
+- `components/TechAstraCore.jsx` - the R3F component. `CoreGem` (a
+  detail-1 icosahedron, `meshPhysicalMaterial` with
+  `transmission/roughness/thickness/ior` per spec, an inner
+  `pointLight`, slow Y rotation, and the 1.0->1.03 breathing scale pulse
+  on a sine wave) + six `OrbitingStone` instances (each an octahedron
+  with its own `radius`/`period`/`tilt`/`phase`/`spin` from
+  `STONE_CONFIG`, computing elliptical position in `useFrame` exactly per
+  the brief's `x = radius*cos(t), z = radius*sin(t)*tilt` formula, plus
+  independent own-axis spin decoupled from the orbital motion).
+  `Environment preset="night"` + an `EffectComposer`/`Bloom` pass
+  (intensity 0.6, inside the brief's 0.4-0.8 range). A `ParallaxGroup`
+  wraps the whole core+stones group and nudges its rotation toward the
+  pointer position, but only when `isFinePointer()` reports a real mouse
+  (mobile/touch gets the ambient animation with zero parallax).
+- Fallback matrix: `prefers-reduced-motion` skips WebGL entirely and
+  renders `TechAstraCoreStatic` with `animated={false}` (a genuinely
+  still frame); WebGL-unsupported or any render error (caught by
+  `TechAstraCoreErrorBoundary`) renders the same static component with
+  `animated={true}` instead, so the page still has some life to it.
+  `dpr={[1,2]}` and an `IntersectionObserver`-driven
+  `frameloop="never"|"always"` toggle handle the performance
+  requirements.
+- `components/TechAstraCoreStatic.jsx` - the pure-CSS fallback graphic:
+  a faceted-gem `clip-path` core with a radial glow, six smaller faceted
+  stones placed around it via `rotate()+translateX()+scaleY()` (an
+  ellipse, not a perfect circle, echoing the "tilted" orbit), animated
+  with three new CSS keyframes in `index.css`
+  (`.animate-core-ring-spin` / `.animate-core-stone-spin` /
+  `.animate-core-breathe`) when `animated`, or a single static frame
+  when not.
+- `components/CoreWatermark.jsx` - the secondary placement: always
+  `TechAstraCoreStatic` with `animated={false}`, mounted in
+  `components/Navbar.jsx` beside the wordmark on every page (`sm+`
+  screens only - hidden on narrow viewports where there's no room for a
+  purely decorative element).
+- `components/TechAstraCoreErrorBoundary.jsx` - same class-component
+  error-boundary pattern used throughout this codebase for R3F trees.
+- Wired into `pages/Login.jsx` as the primary placement, replacing what
+  had been a static photo backdrop on the split layout's left/desktop
+  panel - form on the right, `TechAstraCore` centered on the left, per
+  the brief's suggested layout.
+- Naming audit: every identifier in this feature (`TechAstraCore`,
+  `TechAstraCoreStatic`, `TechAstraCoreErrorBoundary`, `CoreWatermark`,
+  `CoreGem`, `OrbitingStone`, "Nexus Stone" in comments/aria-labels) is
+  original - no reference to Marvel, Vision, Infinity Stones, or any
+  other third-party trademark anywhere in code, comments, or user-facing
+  text.
+- **VERIFICATION CAVEAT:** `three`, `@react-three/fiber`,
+  `@react-three/drei`, and `@react-three/postprocessing` are listed in
+  `client/package.json` but this sandbox has no npm registry access, so
+  none of these packages could actually be installed or rendered in a
+  browser here. Written carefully to the documented APIs, but - unlike
+  most of this codebase - this component has **not** been
+  runtime-verified. Please test for real after `npm install`.
+
+---
+
+## 4. PAGES & USER FLOW (Registration Portal + all role portals)
 
 **Entry point:** `/events` - this is the first page a user sees, not a
 marketing homepage.
@@ -288,7 +446,10 @@ actually requires).
   browser or preview images/video. Everything above was verified via
   `bun build` syntax checks and manual code review only. Please pull,
   run it for real, and report anything that looks wrong.
-- Sections 1-3 and 5A-5C of the original brief are not captured in this
+- Sections 1-3, 5A, and 5B of the original brief are not captured in this
   file (see the provenance note at the top) - if they matter for future
   work, they should be sourced from wherever they were originally written
   and appended here.
+- **The "TechAstra Core" 3D object (Section 5C) has not been
+  runtime-verified either**, for the same reason as 5F - no npm registry
+  access in this sandbox. See that section's own verification caveat.

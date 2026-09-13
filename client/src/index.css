@@ -451,3 +451,45 @@ h1, h2, h3, h4, h5, h6 {
 .accordion-panel > div {
   overflow: hidden;
 }
+
+
+/* ============================================================
+   Section 5C - "TechAstra Core" pure-CSS fallback animations
+   (used by TechAstraCoreStatic.jsx when animated=true - the
+   WebGL-unsupported/render-error case; prefers-reduced-motion always
+   renders with animated=false and never applies any of these)
+   ============================================================ */
+
+/* Spins the whole orbit ring (all six stones together) around the core -
+   the flat-CSS analog of the real 3D version's per-stone elliptical
+   motion; a single shared rotation is a deliberate simplification here,
+   not an attempt to reproduce six independent orbital periods in CSS. */
+@keyframes coreRingSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-core-ring-spin {
+  animation: coreRingSpin 26s linear infinite;
+}
+
+/* Counter-rotates each stone's own facet shape so it doesn't visually
+   spin in lockstep with the ring's rotation - giving each stone its own
+   independent tumble, echoing the 3D version's "each stone also spins on
+   its own axis, independent of its orbital motion" requirement. */
+@keyframes coreStoneSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+.animate-core-stone-spin {
+  animation: coreStoneSpin 6s linear infinite;
+}
+
+/* The core gem's "heartbeat/breathing" pulse - 1.0 -> 1.03 scale on a
+   slow sine-like ease, matching the 3D version's own breathing effect. */
+@keyframes coreBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.animate-core-breathe {
+  animation: coreBreathe 4s ease-in-out infinite;
+}
