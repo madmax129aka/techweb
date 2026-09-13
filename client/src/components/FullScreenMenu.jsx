@@ -182,8 +182,19 @@ export default function FullScreenMenu({ open, onClose }) {
     }
   }, [open]);
 
-  if (!mounted) return null;
-
+  // BUG FIX: these two useCallback hooks used to be declared AFTER the
+  // `if (!mounted) return null` early return below. That's a Rules-of-
+  // Hooks violation - hooks must run in the exact same order on every
+  // render, never conditionally. On the menu's very first render
+  // `mounted` is still false (its useState initializer reads `open`,
+  // which starts false), so React saw N hooks called before hitting the
+  // early return. The instant the menu opened, `mounted` flipped to true
+  // on a LATER render, and only THEN did these two hooks get called for
+  // the first time - a hook-count mismatch between renders that makes
+  // React throw and unmount the whole tree, which is exactly why
+  // clicking the hamburger produced a blank page instead of the menu.
+  // Moving them above the early return (all hooks now run unconditionally
+  // on every render, regardless of `mounted`) fixes this permanently.
   const go = useCallback(
     (path) => {
       onClose();
@@ -208,6 +219,8 @@ export default function FullScreenMenu({ open, onClose }) {
     },
     [onClose, openPanel, go]
   );
+
+  if (!mounted) return null;
 
   const handleLogout = () => {
     logout();
