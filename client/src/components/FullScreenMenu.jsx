@@ -244,7 +244,14 @@ export default function FullScreenMenu({ open, onClose }) {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] bg-[#0F1424] backdrop-blur-md flex flex-col ${
+      // BUG FIX: this was hardcoded as bg-[#0F1424] - a literal navy
+      // blue completely unrelated to the site's shared dark red/charcoal
+      // palette (see the theme-tokens comment at the top of index.css).
+      // `bg-void` is the exact same token every other dark surface in
+      // this app already uses (Login page, event card footers, the
+      // site footer, SlidePanel) - this menu now visually belongs to the
+      // same site instead of looking like a different color family.
+      className={`fixed inset-0 z-[100] bg-void backdrop-blur-md flex flex-col ${
         closing ? "animate-menu-fade-out" : "animate-menu-fade-in"
       }`}
       role="dialog"
@@ -412,8 +419,13 @@ export default function FullScreenMenu({ open, onClose }) {
               e.currentTarget.style.display = "none";
             }}
           />
-          {/* Bottom gradient scrim so overlaid event text stays legible */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0F1424] via-[#0F1424]/20 to-transparent" />
+          {/* Bottom gradient scrim so overlaid event text stays legible.
+              BUG FIX: was from-[#0F1424]/via-[#0F1424]/20 - the same
+              stray navy blue as the panel background above; switched to
+              `void` (the shared dark token) so the scrim tints toward
+              the same color the rest of the panel is now built from,
+              rather than a completely different hue. */}
+          <div className="absolute inset-0 bg-gradient-to-t from-void via-void/20 to-transparent" />
 
           {/* Event details overlay - only when an individual event is hovered */}
           {activeEvent && (

@@ -43,7 +43,13 @@ export default function AnalyticsTab() {
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
             <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" fontSize={12} />
             <YAxis stroke="rgba(255,255,255,0.5)" fontSize={12} />
-            <Tooltip contentStyle={{ background: "#161B2E", border: "1px solid rgba(255,255,255,0.1)" }} />
+            {/* BUG FIX: this tooltip was hardcoded to #161B2E - a navy
+                shade unrelated to the site's shared dark red/charcoal
+                palette (the same category of bug found in the mega-menu -
+                see index.css's theme-tokens comment). Recharts requires
+                real inline style values here (no Tailwind classes), so
+                it references the shared CSS variable instead. */}
+            <Tooltip contentStyle={{ background: "var(--color-bg-elevated)", border: "1px solid rgba(255,255,255,0.1)" }} />
             <Line type="monotone" dataKey="count" stroke="#3DD9EB" strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
@@ -57,7 +63,7 @@ export default function AnalyticsTab() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis type="number" stroke="rgba(255,255,255,0.5)" fontSize={12} />
               <YAxis dataKey="eventName" type="category" width={140} stroke="rgba(255,255,255,0.5)" fontSize={11} />
-              <Tooltip contentStyle={{ background: "#161B2E", border: "1px solid rgba(255,255,255,0.1)" }} />
+              <Tooltip contentStyle={{ background: "var(--color-bg-elevated)", border: "1px solid rgba(255,255,255,0.1)" }} />
               <Bar dataKey="seatsTaken" fill="#3DD9EB" radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -80,7 +86,7 @@ export default function AnalyticsTab() {
                   <Cell key={entry.college} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{ background: "#161B2E", border: "1px solid rgba(255,255,255,0.1)" }} />
+              <Tooltip contentStyle={{ background: "var(--color-bg-elevated)", border: "1px solid rgba(255,255,255,0.1)" }} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>

@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * SHARED THEME TOKENS - single source of truth for the app's dark
+ * red/charcoal palette. Every component must reference these (or the
+ * matching Tailwind color classes they mirror - void/surface/arc/
+ * offwhite in tailwind.config.js) instead of hardcoding its own
+ * background/text color.
+ *
+ * This exists because FullScreenMenu.jsx was found hardcoding
+ * bg-[#0F1424] - a literal navy blue with no relation to this palette
+ * at all - instead of reusing the same dark tone as the Login page and
+ * every event card. Values below are sampled EXACTLY from the existing
+ * Tailwind tokens (tailwind.config.js `colors.void`/`colors.surface`/
+ * `colors.arc`/`colors.offwhite`), not new colors invented for this
+ * fix, so introducing these variables cannot itself cause any visual
+ * drift from what the rest of the site already looks like.
+ */
+:root {
+  --color-bg-base: #0D0303;       /* = tailwind `void` - Login page, event card footers, footer bar */
+  --color-bg-elevated: #1A0505;   /* = tailwind `surface` - a lighter panel shade of the same red-black hue family */
+  --color-accent: #22D3EE;        /* = tailwind `arc` - the cyan used on "Welcome Back" / links / focus rings */
+  --color-text-primary: #F5F3F0;  /* = tailwind `offwhite` - primary body/heading text on the dark base */
+  --color-text-muted: rgba(245, 243, 240, 0.55); /* = tailwind `offwhite` at reduced opacity - secondary/de-emphasized text */
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -397,9 +421,10 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Right-panel image crossfade for the split-screen mega-menu (Section
    5D): the <img> is re-keyed by src so React remounts it on each change,
-   and this fade-in on the fresh element - over the dark #0F1424 panel
-   behind it - reads as a smooth crossfade rather than a hard swap. Kept
-   short (220ms) per the brief's "instant" feel. */
+   and this fade-in on the fresh element - over the dark void-toned panel
+   behind it (see the theme-tokens comment near the top of this file) -
+   reads as a smooth crossfade rather than a hard swap. Kept short
+   (220ms) per the brief's "instant" feel. */
 @keyframes menuImageFade {
   from { opacity: 0; }
   to { opacity: 1; }

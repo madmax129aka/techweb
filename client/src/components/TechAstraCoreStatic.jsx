@@ -19,19 +19,33 @@ import React from "react";
  *      this directly, `animated={false}` - it's explicitly specified as
  *      a "small, static (non-orbiting)" secondary placement, so it never
  *      needs the WebGL version at all.
+ *
+ * MATERIAL BUG FIX: each stone previously rendered as a FLAT solid-color
+ * shape (`background: stone.color`), which is exactly the "flat, plastic"
+ * look this whole feature was called out for - just as much a problem in
+ * this pure-CSS version as it was in the real 3D one. Every stone now
+ * uses a small radial gradient (white-hot center fading to a pale tint
+ * of its hue, per `paleColor`) instead of one flat fill color, giving it
+ * a glassy highlight-and-falloff even without any real lighting engine
+ * - the closest a flat CSS shape can get to "light passing through a
+ * gem" rather than "a painted sticker."
  */
 
 // Six stones, one per track, an original color set (not copied from any
-// existing IP's palette). Positioned via a CSS custom property per stone
-// so both the static (fixed rotation) and animated (spinning ring)
-// layouts share one definition.
+// existing IP's palette). `emissiveColor` drives the glow (box-shadow);
+// `paleColor` is the gradient's mid-tone, matching the pale, near-white
+// tints TechAstraCore.jsx's real glass material now uses for the same
+// reason - a fully saturated flat fill reads as a painted solid, not
+// glass. Positioned via a CSS custom property per stone so both the
+// static (fixed rotation) and animated (spinning ring) layouts share one
+// definition.
 const STONES = [
-  { color: "#22D3EE", angle: 0, label: "Technical" },
-  { color: "#B565F0", angle: 60, label: "Non-Technical" },
-  { color: "#F2B84B", angle: 120, label: "Flagship" },
-  { color: "#34D399", angle: 180, label: "Robotics" },
-  { color: "#E8495B", angle: 240, label: "Esports" },
-  { color: "#4C8DF6", angle: 300, label: "Creative" },
+  { emissiveColor: "#22D3EE", paleColor: "#D8F8FD", angle: 0, label: "Technical" },
+  { emissiveColor: "#B565F0", paleColor: "#EFE1FD", angle: 60, label: "Non-Technical" },
+  { emissiveColor: "#F2B84B", paleColor: "#FDECC9", angle: 120, label: "Flagship" },
+  { emissiveColor: "#34D399", paleColor: "#DAF7EA", angle: 180, label: "Robotics" },
+  { emissiveColor: "#E8495B", paleColor: "#FCDFE2", angle: 240, label: "Esports" },
+  { emissiveColor: "#4C8DF6", paleColor: "#DEE9FE", angle: 300, label: "Creative" },
 ];
 
 export default function TechAstraCoreStatic({ size = 260, animated = true, className = "" }) {
@@ -73,9 +87,12 @@ export default function TechAstraCoreStatic({ size = 260, animated = true, class
               style={{
                 width: "100%",
                 height: "100%",
-                background: stone.color,
+                // Radial gradient (white-hot center -> pale tint -> a
+                // faint edge of the saturated hue) instead of one flat
+                // fill - see the MATERIAL BUG FIX note above.
+                background: `radial-gradient(circle at 35% 30%, #ffffff 0%, ${stone.paleColor} 45%, ${stone.emissiveColor}66 100%)`,
                 clipPath: "polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)",
-                boxShadow: `0 0 ${stoneSize * 0.9}px ${stone.color}99, 0 0 ${stoneSize * 0.3}px ${stone.color}`,
+                boxShadow: `0 0 ${stoneSize * 0.9}px ${stone.emissiveColor}99, 0 0 ${stoneSize * 0.3}px ${stone.emissiveColor}`,
               }}
             />
           </div>

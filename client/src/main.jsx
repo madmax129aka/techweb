@@ -30,9 +30,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               <Toaster
                 position="top-right"
                 toastOptions={{
+                  // Referencing the shared CSS variables (index.css)
+                  // instead of the raw hex values directly - this inline
+                  // `style` object can't use Tailwind classes, but it CAN
+                  // use real CSS custom properties, so it stays wired to
+                  // the same single source of truth as everything else.
                   style: {
-                    background: "#0D0303",
-                    color: "#F5F3F0",
+                    background: "var(--color-bg-base)",
+                    color: "var(--color-text-primary)",
                     border: "1px solid rgba(170,5,5,0.3)",
                   },
                 }}

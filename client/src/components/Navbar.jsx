@@ -44,16 +44,16 @@ export default function Navbar() {
     <>
       {/*
         Section 5E bug fix: when the full-screen menu is open, this header
-        used to just sit UNDERNEATH the menu overlay - which is at
-        bg-[#0F1424]/98 (98% opaque, not fully opaque), so at certain
-        zoom levels/contrast settings the nav links ("EVENTS / LEADERBOARD
-        / VERIFY CERTIFICATE") could still ghost through faintly. Rather
-        than chase that by making the overlay 100% opaque (which the menu
-        component also now does, belt-and-suspenders), the header itself
-        is set to `invisible` (Tailwind's visibility: hidden) the moment
-        the menu opens - it's removed from the visual render entirely
-        (still in the DOM/layout, just not painted), so there is no way
-        for it to bleed through regardless of what's on top of it.
+        used to just sit UNDERNEATH the menu overlay - which was not
+        fully opaque, so at certain zoom levels/contrast settings the nav
+        links ("EVENTS / VERIFY CERTIFICATE") could still ghost through
+        faintly. Rather than chase that by making the overlay 100% opaque
+        (which the menu component's `bg-void` also now is,
+        belt-and-suspenders), the header itself is set to `invisible`
+        (Tailwind's visibility: hidden) the moment the menu opens - it's
+        removed from the visual render entirely (still in the
+        DOM/layout, just not painted), so there is no way for it to
+        bleed through regardless of what's on top of it.
       */}
       <header
         className={`nav-cinematic fixed top-0 left-0 right-0 z-50 ${scrolled ? "nav-scrolled" : ""} ${
