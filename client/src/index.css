@@ -369,13 +369,30 @@ h1, h2, h3, h4, h5, h6 {
   animation: cinematicFade 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Full-screen slide-out menu overlay + crossfade */
+/* Full-screen slide-out menu overlay, open/close.
+   Section 5G: "fade AND slight scale (e.g. scale from 0.98 to 1)
+   combined, not just opacity toggling" - both directions now animate
+   opacity + transform together (previously this was opacity-only, and
+   had no closing animation at all - the menu just vanished the instant
+   `open` went false, since the component unmounted immediately). A
+   cubic-bezier ease-out (closer to the reference site's easing than a
+   flat `ease`) is used for both, and FullScreenMenu.jsx now keeps the
+   component mounted for one extra animation-duration after close so
+   .animate-menu-fade-out actually gets to play before unmounting. */
 @keyframes menuFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
 }
-.animate-menu-fade {
-  animation: menuFadeIn 0.5s ease both;
+.animate-menu-fade-in {
+  animation: menuFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes menuFadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.98); }
+}
+.animate-menu-fade-out {
+  animation: menuFadeOut 0.32s cubic-bezier(0.4, 0, 0.6, 1) both;
 }
 
 /* Right-panel image crossfade for the split-screen mega-menu (Section

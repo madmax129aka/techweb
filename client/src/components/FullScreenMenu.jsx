@@ -1,10 +1,23 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { usePanels } from "../context/PanelContext";
 import { api } from "../lib/api";
 import { getEventImage, CATEGORY_IMAGES, HERO_IMAGES } from "../lib/eventImages";
+
+// Section 5E: solid, fully-opaque hex colors for the left-column
+// dim-on-hover effect - deliberately NOT Tailwind opacity/alpha utilities.
+// CSS `opacity` (or an rgba/`/NN` color) makes the WHOLE element blend
+// with whatever is rendered behind it; on this panel (a near-opaque
+// backdrop-blurred overlay sitting over hero photography) that
+// compositing is exactly what let the background photo visibly bleed
+// through the dimmed "Gallery / My Dashboard / Help Desk" rows. A flat,
+// fully-opaque color has no alpha channel to blend with anything, so the
+// text is either lit or dim - never see-through.
+const ACTIVE_TEXT = "text-offwhite"; // solid #F5F3F0 - full opacity/prominence
+const DIM_TEXT = "text-[#78787f]"; // solid muted slate - ~same visual weight as the old opacity-45, but opaque
+const MUTED_BASE_TEXT = "text-[#bcbbbd]"; // solid softer white for always-de-emphasized rows (e.g. "View All Events")
 
 const PORTAL_PATH = {
   registration_team: "/registration-team",
@@ -19,12 +32,19 @@ const PORTAL_PATH = {
 // Top-level (Level 1) categories other than Events. Events is handled
 // specially below because it drills down two more levels
 // (Technical / Non-Technical -> individual events).
+//
+// SCOPE CORRECTION: this app is the Registration Portal only (opened via
+// a "Register" link from a separate main marketing site) - Home,
+// Leaderboard, and Gallery all belong to that other site and have been
+// removed from this list. "My Dashboard" now points at /status (the
+// public status-check page), matching how it worked before; "Help Desk"
+// opens its slide-in panel directly instead of routing through the now-
+// deleted /faq page; "Verify Certificate" was promoted into the Level-1
+// list itself, per the corrected Section 5D.
 const SIMPLE_CATEGORIES = [
-  { key: "home", label: "Home", to: "/", image: HERO_IMAGES.intro },
-  { key: "leaderboard", label: "Leaderboard", to: "/leaderboard", image: HERO_IMAGES.registrations },
-  { key: "gallery", label: "Gallery", to: "/gallery", image: HERO_IMAGES.intro },
   { key: "dashboard", label: "My Dashboard", to: "/status", image: HERO_IMAGES.flagship },
-  { key: "help", label: "Help Desk", to: "/faq", image: HERO_IMAGES.flagship },
+  { key: "help", label: "Help Desk", action: "openPanel:help", image: HERO_IMAGES.flagship },
+  { key: "verify", label: "Verify Certificate", to: "/verify-certificate", image: HERO_IMAGES.registrations },
 ];
 
 const CATEGORY_META = {
@@ -41,7 +61,11 @@ function timeSlot(iso) {
 }
 
 /**
- * SECTION 5D - Split-screen "Models"-style mega-menu.
+ * SECTION 5D (revised) - Split-screen "Models"-style mega-menu, scoped to
+ * this app's corrected Level-1 set: Events / My Dashboard / Help Desk /
+ * Verify Certificate. Home, Leaderboard, and Gallery were removed - this
+ * app is the Registration Portal only, opened via a "Register" link from
+ * a separate main marketing site that owns those pages instead.
  *
  * Full-screen dark overlay split into two halves:
  *   LEFT  - a vertical stack of large, light-weight nav categories. The
@@ -52,14 +76,18 @@ function timeSlot(iso) {
  *           currently hovered/active, crossfading between images.
  *
  * Key premium interaction details from the brief, implemented explicitly:
- *   - opacity-dim-on-hover: whatever is hovered stays full opacity, its
- *     siblings dim to ~45% to draw focus (the `dimSiblings` helper).
- *   - instant crossfade: two stacked <img> layers swap opacity on a
- *     200ms transition rather than the src being hot-swapped (which would
- *     flicker). Images are preloaded when the menu opens so the swap is
- *     immediate with no loading flash.
+ *   - opacity-dim-on-hover (Section 5E): whatever is hovered stays fully
+ *     opaque, its siblings dim to a solid muted color (`dimClass` below) -
+ *     using a SOLID color rather than CSS opacity is itself a bug fix,
+ *     see the ACTIVE_TEXT/DIM_TEXT comment for why.
+ *   - instant crossfade: the right <img> is re-keyed by src so it
+ *     remounts with a short fade rather than the src being hot-swapped
+ *     (which would flicker). Images are preloaded when the menu opens so
+ *     the swap is immediate with no loading flash.
  *   - hovering a category header shows a generic cover; hovering a
  *     specific event shows THAT event's banner + time slot + fee overlaid.
+ *   - open/close animates fade + scale together (Section 5G), not a
+ *     plain opacity toggle - see .animate-menu-fade-in/-out in index.css.
  */
 export default function FullScreenMenu({ open, onClose }) {
   const { user, logout } = useAuth();
@@ -73,6 +101,45 @@ export default function FullScreenMenu({ open, onClose }) {
   const [eventsExpanded, setEventsExpanded] = useState(false);
   // What the right panel currently reflects (drives the image + overlay).
   const [active, setActive] = useState(null); // { type, image, event? }
+
+  // Section 5G: the menu needs a real CLOSING animation (fade + slight
+  // scale-down), not just an instant unmount, so it stays mounted for one
+  // extra animation-duration after `open` goes false. `mounted` controls
+  // whether this component renders anything at all; `closing` selects
+  // which keyframe animation plays. Kept as plain state + a timeout
+  // (matching the CSS animation's duration below) rather than reaching
+  // for a transition library, since this is the only place in the app
+  // that needs an exit animation.
+  const [mounted, setMounted] = useState(open);
+  const [closing, setClosing] = useState(false);
+  const closeTimerRef = useRef(null);
+  const navRef = useRef(null);
+
+  useEffect(() => {
+    if (open) {
+      clearTimeout(closeTimerRef.current);
+      setMounted(true);
+      setClosing(false);
+    } else {
+      setClosing(true);
+      closeTimerRef.current = setTimeout(() => setMounted(false), 320);
+    }
+    return () => clearTimeout(closeTimerRef.current);
+  }, [open]);
+
+  // Section 5E (bug 4): the left column previously used `justify-center`,
+  // which - combined with content that grows taller as more drill-down
+  // levels expand - centers the WHOLE list vertically and can push its
+  // first rows (e.g. the "Technical" header, as seen in the bug report)
+  // above the visible/scrollable area. The column is now top-anchored
+  // (`justify-start`, see the JSX below) with its own scroll container,
+  // and this effect scrolls that container back to the very top every
+  // time a new level is expanded/collapsed, so whatever just
+  // appeared/changed is always fully visible without the user needing to
+  // manually scroll up first.
+  useEffect(() => {
+    if (navRef.current) navRef.current.scrollTop = 0;
+  }, [eventsExpanded, expandedCategory]);
 
   // Fetch events once, when the menu first opens.
   useEffect(() => {
@@ -115,6 +182,8 @@ export default function FullScreenMenu({ open, onClose }) {
     }
   }, [open]);
 
+  if (!mounted) return null;
+
   const go = useCallback(
     (path) => {
       onClose();
@@ -123,13 +192,28 @@ export default function FullScreenMenu({ open, onClose }) {
     [onClose, navigate]
   );
 
+  // Resolves a SIMPLE_CATEGORIES entry's click - either a route (`to`)
+  // or an action like opening the Help Desk panel (`action`). Kept as
+  // one helper so the row-rendering loop below doesn't need a special
+  // case for "Home" anymore (that entry no longer exists post-scope-
+  // correction; every remaining Level-1 row is rendered the same way).
+  const handleCategoryClick = useCallback(
+    (cat) => {
+      if (cat.action === "openPanel:help") {
+        onClose();
+        openPanel("help");
+      } else if (cat.to) {
+        go(cat.to);
+      }
+    },
+    [onClose, openPanel, go]
+  );
+
   const handleLogout = () => {
     logout();
     onClose();
-    navigate("/");
+    navigate("/events");
   };
-
-  if (!open) return null;
 
   // The image the right panel should show right now, with a sensible
   // fallback if nothing is hovered yet.
@@ -139,13 +223,17 @@ export default function FullScreenMenu({ open, onClose }) {
   // Whether a left-column item should dim: if the user is hovering
   // something (`hoveredKey`), every OTHER item dims. Implemented per
   // "row group" so hovering an event doesn't dim its own siblings' headers.
+  // Returns a SOLID opaque text-color class, never an opacity utility -
+  // see the ACTIVE_TEXT/DIM_TEXT comment above for why.
   const hoveredKey = active?.hoverKey || null;
   const dimClass = (key) =>
-    hoveredKey && hoveredKey !== key ? "opacity-45" : "opacity-100";
+    hoveredKey && hoveredKey !== key ? DIM_TEXT : ACTIVE_TEXT;
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-[#0F1424]/98 backdrop-blur-md animate-menu-fade flex flex-col"
+      className={`fixed inset-0 z-[100] bg-[#0F1424] backdrop-blur-md flex flex-col ${
+        closing ? "animate-menu-fade-out" : "animate-menu-fade-in"
+      }`}
       role="dialog"
       aria-modal="true"
       aria-label="Site menu"
@@ -170,16 +258,8 @@ export default function FullScreenMenu({ open, onClose }) {
           className="flex flex-col justify-center gap-1 px-6 sm:px-16 py-10 overflow-y-auto no-scrollbar"
           onMouseLeave={() => setActive((a) => ({ ...a, hoverKey: null }))}
         >
-          {/* Home (first simple item) */}
-          <MenuRow
-            label={SIMPLE_CATEGORIES[0].label}
-            dim={dimClass(SIMPLE_CATEGORIES[0].key)}
-            onHover={() => setActive({ type: "simple", image: SIMPLE_CATEGORIES[0].image, hoverKey: SIMPLE_CATEGORIES[0].key })}
-            onClick={() => go(SIMPLE_CATEGORIES[0].to)}
-            dataLog={`menu-category-${SIMPLE_CATEGORIES[0].key}`}
-          />
-
-          {/* ---- Events (3-level drill-down) ---- */}
+          {/* ---- Events (3-level drill-down) - rendered first, as the
+                primary reason this app exists ---- */}
           <div>
             <MenuRow
               label="Events"
@@ -261,14 +341,14 @@ export default function FullScreenMenu({ open, onClose }) {
             )}
           </div>
 
-          {/* Remaining simple categories */}
-          {SIMPLE_CATEGORIES.slice(1).map((cat) => (
+          {/* Remaining Level-1 rows: My Dashboard / Help Desk / Verify Certificate */}
+          {SIMPLE_CATEGORIES.map((cat) => (
             <MenuRow
               key={cat.key}
               label={cat.label}
               dim={dimClass(cat.key)}
               onHover={() => setActive({ type: "simple", image: cat.image, hoverKey: cat.key })}
-              onClick={() => go(cat.to)}
+              onClick={() => handleCategoryClick(cat)}
               dataLog={`menu-category-${cat.key}`}
             />
           ))}
@@ -293,17 +373,6 @@ export default function FullScreenMenu({ open, onClose }) {
                 Login
               </Link>
             )}
-
-            <button
-              onClick={() => {
-                onClose();
-                openPanel("help");
-              }}
-              className="nav-link-cinematic text-left"
-              data-log="menu-contact-help"
-            >
-              Contact Help Desk
-            </button>
 
             <button onClick={toggleLang} className="nav-link-cinematic text-left" data-log="menu-toggle-lang">
               {lang === "en" ? "\u0ba4\u0bae\u0bbf\u0bb4\u0bcd (Switch to Tamil)" : "English (Switch to English)"}
@@ -355,10 +424,16 @@ export default function FullScreenMenu({ open, onClose }) {
 /**
  * A single left-column row. `size` controls the type scale for each
  * drill-down level (top-level categories are largest, leaf events
- * smallest). `dim` is the caller-computed opacity class implementing the
- * dim-siblings-on-hover effect.
+ * smallest).
+ *
+ * `dim` is the caller-computed SOLID text-color class (ACTIVE_TEXT /
+ * DIM_TEXT / MUTED_BASE_TEXT) implementing the dim-siblings-on-hover
+ * effect - it is the ONLY thing controlling this row's color (no
+ * competing text-offwhite/NN base class), which is what guarantees the
+ * text is always fully opaque against the panel behind it (Section 5E)
+ * rather than blending with it via an alpha channel.
  */
-function MenuRow({ label, size = "top", dim = "opacity-100", expandable, expanded, muted, onHover, onClick, dataLog }) {
+function MenuRow({ label, size = "top", dim = ACTIVE_TEXT, expandable, expanded, muted, onHover, onClick, dataLog }) {
   const sizeClass =
     size === "top"
       ? "font-serif text-3xl sm:text-4xl py-2"
@@ -366,22 +441,26 @@ function MenuRow({ label, size = "top", dim = "opacity-100", expandable, expande
       ? "font-serif text-xl sm:text-2xl py-1.5"
       : "text-base sm:text-lg py-1"; // leaf
 
+  // `muted` rows (e.g. "View All Events") start softer than a normal row
+  // even before any hover-dimming is applied, but the hover-dim state
+  // (`dim` prop) always wins once something else is actively hovered -
+  // so a muted row that's hovered itself still reads as ACTIVE_TEXT.
+  const colorClass = dim === ACTIVE_TEXT && muted ? MUTED_BASE_TEXT : dim;
+
   return (
     <button
       type="button"
       onMouseEnter={onHover}
       onFocus={onHover}
       onClick={onClick}
-      className={`group text-left flex items-center gap-3 transition-opacity duration-300 ${dim} ${sizeClass} ${
-        muted ? "text-offwhite/55 hover:text-arc" : "text-offwhite hover:text-arc"
-      }`}
+      className={`group text-left flex items-center gap-3 transition-colors duration-300 ${colorClass} hover:text-arc ${sizeClass}`}
       data-log={dataLog}
     >
       <span>{label}</span>
       {expandable && (
         <span
           aria-hidden="true"
-          className={`text-arc/70 text-sm transition-transform duration-300 ${expanded ? "rotate-45" : ""}`}
+          className={`text-arc text-sm transition-transform duration-300 ${expanded ? "rotate-45" : ""}`}
         >
           +
         </span>

@@ -1,17 +1,18 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import { useCart } from "../context/CartContext";
-import { usePanels } from "../context/PanelContext";
 
 /**
  * Cinematic list layout: borderless rows separated by thin crimson
- * dividers instead of stacked boxed Cards, matching the Leaderboard/
- * Status treatment. Logic (removeItem/openPanel/total) is untouched.
+ * dividers instead of stacked boxed Cards, matching the Status page
+ * treatment. "Proceed to Registration" now navigates to the routed
+ * /register page (previously opened a slide-in overlay panel - see
+ * Register.jsx for why that pattern was reverted).
  */
 export default function Cart() {
   const { items, removeItem, total } = useCart();
-  const { openPanel } = usePanels();
+  const navigate = useNavigate();
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-20">
@@ -60,7 +61,7 @@ export default function Cart() {
           <Button
             size="lg"
             className="w-full"
-            onClick={() => openPanel("registration")}
+            onClick={() => navigate("/register")}
             data-log="cart-proceed-to-registration"
           >
             Proceed to Registration

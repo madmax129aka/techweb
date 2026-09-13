@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Button from "../components/ui/Button";
 import CinematicImage from "../components/CinematicImage";
+import EventHeroMedia from "../components/EventHeroMedia";
 import { getEventImage } from "../lib/eventImages";
+import { getEventVideoSrc } from "../lib/eventVideos";
 import { api } from "../lib/api";
 import { useCart } from "../context/CartContext";
-import { usePanels } from "../context/PanelContext";
 
 const TABS = [
   { key: "overview", label: "Overview" },
@@ -32,7 +33,7 @@ export default function EventDetail() {
   const [otherEvents, setOtherEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const { items, addItem } = useCart();
-  const { openPanel } = usePanels();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
@@ -60,7 +61,7 @@ export default function EventDetail() {
         return;
       }
     }
-    openPanel("registration");
+    navigate("/register");
   };
 
   if (loading) {
@@ -99,9 +100,24 @@ export default function EventDetail() {
         </div>
       </div>
 
-      {/* Full-bleed banner with one bold statement line */}
+      {/* Full-bleed banner with one bold statement line - headline is
+          CENTERED over the full image rather than bottom-anchored, so
+          this needs the "full" scrim variant (an even dark wash across
+          the whole photo/video) rather than the bottom-only gradient
+          default; a bottom-only scrim would leave this centered text
+          sitting on unmodified pixels.
+          Section 5F: EventHeroMedia swaps in a short muted/looping video
+          here once one exists for this event (see lib/eventVideos.js for
+          the "no real .mp4 assets in this sandbox yet" caveat) - until
+          then it's visually identical to the plain CinematicImage this
+          replaced, since it falls back to the same static banner image. */}
       <section className="section-cinematic min-h-[70vh]" id="overview">
-        <CinematicImage src={getEventImage(event.name)} alt={event.name} zoomOnHover={false} />
+        <EventHeroMedia
+          videoSrc={getEventVideoSrc(event.name)}
+          imageSrc={getEventImage(event.name)}
+          alt={event.name}
+          scrim="full"
+        />
         <div className="relative z-10 max-w-3xl mx-auto px-6 text-center animate-cinematic-fade">
           <p className="text-arc text-[11px] tracking-cinematic uppercase mb-5">{event.track || "General"}</p>
           <h1 className="font-serif text-4xl sm:text-6xl text-offwhite leading-tight">{event.name}</h1>
@@ -111,7 +127,10 @@ export default function EventDetail() {
       {/* Alternating image+text: description */}
       <section className="max-w-5xl mx-auto px-6 py-24 grid sm:grid-cols-2 gap-12 items-center">
         <div className="relative aspect-[4/3] order-2 sm:order-1">
-          <CinematicImage src={getEventImage(event.name)} alt={event.name} accent="crimson" zoomOnHover={false} />
+          {/* No text is overlaid on this image (the description sits
+              beside it, not on top), so the contrast scrim is unneeded
+              here - "none" keeps this as a purely decorative photo. */}
+          <CinematicImage src={getEventImage(event.name)} alt={event.name} accent="crimson" zoomOnHover={false} scrim="none" />
         </div>
         <div className="order-1 sm:order-2">
           <p className="text-arc text-[11px] tracking-cinematic uppercase mb-4">The Event</p>
@@ -133,7 +152,8 @@ export default function EventDetail() {
           </p>
         </div>
         <div className="relative aspect-[4/3]">
-          <CinematicImage src={getEventImage(event.name)} alt={event.name} accent="arc" zoomOnHover={false} />
+          {/* Same as above - decorative only, no overlaid text. */}
+          <CinematicImage src={getEventImage(event.name)} alt={event.name} accent="arc" zoomOnHover={false} scrim="none" />
         </div>
       </section>
 
@@ -171,7 +191,7 @@ export default function EventDetail() {
                 data-log={`continue-journey-${e.id}`}
               >
                 <CinematicImage src={getEventImage(e.name)} alt={e.name} accent="crimson" />
-                <div className="absolute inset-0 flex flex-col items-start justify-end p-6">
+                <div className="relative z-10 h-full flex flex-col items-start justify-end p-6">
                   <h3 className="font-serif text-lg sm:text-xl text-offwhite mb-2">{e.name}</h3>
                   <span className="text-[10px] tracking-cinematic uppercase text-arc opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     Discover More &rarr;

@@ -5,6 +5,13 @@ symposium: registration, UPI payment verification, digital ID cards with QR
 codes, event check-in, food distribution tracking, live results, and digital
 certificates.
 
+> **Scope note:** this repository is the **Registration Portal sub-app
+> only** — it is opened via a "Register" link from a separate main
+> marketing site (homepage, event storytelling, public Leaderboard/Gallery
+> all live there instead). See [`DESIGN_BRIEF.md`](./DESIGN_BRIEF.md) for
+> the full page list, the split-screen Events mega-menu spec, and the
+> contrast/transition quality bar this app is held to.
+
 ## Tech Stack
 
 - **Frontend:** React (Vite) + TailwindCSS + shadcn/ui-style components, React Router

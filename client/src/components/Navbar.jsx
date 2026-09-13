@@ -41,18 +41,39 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={`nav-cinematic fixed top-0 left-0 right-0 z-50 ${scrolled ? "nav-scrolled" : ""}`}>
+      {/*
+        Section 5E bug fix: when the full-screen menu is open, this header
+        used to just sit UNDERNEATH the menu overlay - which is at
+        bg-[#0F1424]/98 (98% opaque, not fully opaque), so at certain
+        zoom levels/contrast settings the nav links ("EVENTS / LEADERBOARD
+        / VERIFY CERTIFICATE") could still ghost through faintly. Rather
+        than chase that by making the overlay 100% opaque (which the menu
+        component also now does, belt-and-suspenders), the header itself
+        is set to `invisible` (Tailwind's visibility: hidden) the moment
+        the menu opens - it's removed from the visual render entirely
+        (still in the DOM/layout, just not painted), so there is no way
+        for it to bleed through regardless of what's on top of it.
+      */}
+      <header
+        className={`nav-cinematic fixed top-0 left-0 right-0 z-50 ${scrolled ? "nav-scrolled" : ""} ${
+          menuOpen ? "invisible" : ""
+        }`}
+      >
         <nav className="max-w-7xl mx-auto flex items-center justify-between px-5 sm:px-8 py-4">
-          <Link to="/" className="flex items-center" data-log="nav-logo">
+          {/* Logo now links to /events, not "/" - this app has no
+              homepage of its own (see the scope-correction note in
+              App.jsx); /events IS the entry point, so this is just the
+              more direct target ("/" still redirects here anyway). */}
+          <Link to="/events" className="flex items-center" data-log="nav-logo">
             <TechAstraLogo size="sm" />
           </Link>
 
+          {/* Leaderboard link removed - that page now lives on the
+              separate main marketing site, not this Registration Portal
+              app (see App.jsx's scope-correction note). */}
           <div className="hidden md:flex items-center gap-8">
             <Link to="/events" className="nav-link-cinematic" data-log="nav-events">
               Events
-            </Link>
-            <Link to="/leaderboard" className="nav-link-cinematic" data-log="nav-leaderboard">
-              Leaderboard
             </Link>
             <Link to="/verify-certificate" className="nav-link-cinematic" data-log="nav-verify-certificate">
               Verify Certificate

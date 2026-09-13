@@ -1,21 +1,18 @@
 import React from "react";
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
-import RegistrationPanel from "./components/panels/RegistrationPanel";
 import HelpDeskPanel from "./components/panels/HelpDeskPanel";
 
-import Home from "./pages/Home";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import Cart from "./pages/Cart";
+import Register from "./pages/Register";
+import Checkout from "./pages/Checkout";
 import Status from "./pages/Status";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import Leaderboard from "./pages/Leaderboard";
 import VerifyCertificate from "./pages/VerifyCertificate";
-import Gallery from "./pages/Gallery";
-import FAQ from "./pages/FAQ";
 
 import RegistrationTeamPortal from "./pages/portals/RegistrationTeamPortal";
 import CoordinatorPortal from "./pages/portals/CoordinatorPortal";
@@ -29,25 +26,29 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       {/*
-        The navbar is now `fixed` (so it can transparently overlay hero
-        imagery, per the cinematic layout). That means normal page flow
-        needs top padding to avoid content sitting underneath it - EXCEPT
-        the homepage, whose hero is deliberately meant to run full-bleed
-        behind the transparent nav. Home.jsx compensates for this itself
-        with a matching negative top margin on its hero section.
+        The navbar is `fixed` (so it can transparently overlay hero
+        imagery on pages like EventDetail's banner), so normal page flow
+        needs top padding to avoid content sitting underneath it. Every
+        route gets this uniformly now - there used to be a marketing
+        homepage exempted from it (a full-bleed hero running behind the
+        transparent nav), but this app's scope was corrected to be the
+        Registration Portal only, with no homepage of its own (see
+        Events.jsx, the actual entry point).
       */}
       <main className="flex-1 pt-[76px]">
         <Routes>
-          <Route path="/" element={<Home />} />
+          {/* This app's entry point is /events, not a marketing
+              homepage - the separate main site links "Register"
+              straight into /events. */}
+          <Route path="/" element={<Navigate to="/events" replace />} />
           <Route path="/events" element={<Events />} />
           <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/checkout" element={<Checkout />} />
           <Route path="/status" element={<Status />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/verify-certificate" element={<VerifyCertificate />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/faq" element={<FAQ />} />
 
           <Route
             path="/dashboard"
@@ -112,11 +113,11 @@ export default function App() {
       <Footer />
 
       {/*
-        Slide-in form overlays, mounted once here (like FullScreenMenu)
-        rather than as routed pages - see PanelContext for how any page
-        opens these via usePanels().openPanel("registration" | "help").
+        Help Desk is still a slide-in overlay panel (mounted once here,
+        alongside FullScreenMenu) - only Registration moved off this
+        pattern and onto routed pages. See PanelContext for how any page
+        opens this via usePanels().openPanel("help").
       */}
-      <RegistrationPanel />
       <HelpDeskPanel />
     </div>
   );
@@ -133,15 +134,15 @@ function NotFound() {
 
 // A single minimal dark bar - small utility links only, nothing
 // decorative - per the reference site's restrained footer treatment.
+// FAQ was dropped (marketing content, lives on the separate main site
+// now); Verify Certificate and Status remain since both are part of
+// this Registration Portal's own flow.
 function Footer() {
   return (
     <footer className="border-t border-crimson/10 bg-void">
       <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] tracking-wide text-offwhite/35">
         <span>&copy; {new Date().getFullYear()} TechAstra National Symposium</span>
         <div className="flex items-center gap-6">
-          <Link to="/faq" className="hover:text-arc transition-colors" data-log="footer-faq">
-            FAQ
-          </Link>
           <Link to="/verify-certificate" className="hover:text-arc transition-colors" data-log="footer-verify-certificate">
             Verify Certificate
           </Link>
