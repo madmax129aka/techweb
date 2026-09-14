@@ -1,12 +1,25 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import Button from "../components/ui/Button";
 import { Textarea, Select } from "../components/ui/Input";
 import IdCard from "../components/IdCard";
+import ApprovalHero from "../components/dashboard/ApprovalHero";
 import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
+
+// One-time-per-user welcome screen: localStorage (not a query param or
+// plain in-memory state) since the requirement is "don't show this again
+// on a FUTURE LOGIN" - a fresh login is a fresh page load, wiping any
+// plain useState flag, and a query param would need every link that ever
+// leads to /dashboard to remember to append/strip it. localStorage
+// naturally persists across sessions and is keyed per-user (not global)
+// so a shared/kiosk browser correctly re-shows the moment for a
+// DIFFERENT participant logging in afterward.
+function welcomeSeenKey(userId) {
+  return `techastra_welcome_seen_${userId}`;
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -16,7 +29,13 @@ export default function Dashboard() {
   const [feedbackEventId, setFeedbackEventId] = useState("");
   const [rating, setRating] = useState(5);
   const [comments, setComments] = useState("");
+  const [showWelcome, setShowWelcome] = useState(false);
   const cardRef = useRef(null);
+  // The rest of the normal dashboard (ID card / certificates / feedback)
+  // scrolls into view when "VIEW MY EVENTS" is clicked from the welcome
+  // hero, per "the rest of the normal dashboard continues below it on
+  // scroll" - this ref marks where that content actually starts.
+  const dashboardContentRef = useRef(null);
 
   useEffect(() => {
     if (!user) return;
@@ -24,6 +43,30 @@ export default function Dashboard() {
     api.get("/api/certificates/mine").then((data) => setCertificates(data.certificates || [])).catch(() => {});
     api.get("/api/events").then((data) => setEvents(data.events || [])).catch(() => {});
   }, [user]);
+
+  // Decide whether to show the one-time welcome hero once we actually
+  // know both who the user is AND their registration's status - checked
+  // together (not registration alone) so a still-loading registration
+  // can't briefly read as "not approved" and skip showing it.
+  useEffect(() => {
+    if (!user || !registration) return;
+    if (registration.status !== "approved") return;
+    const alreadySeen = localStorage.getItem(welcomeSeenKey(user.id)) === "1";
+    if (!alreadySeen) setShowWelcome(true);
+  }, [user, registration]);
+
+  const dismissWelcome = () => {
+    if (user) localStorage.setItem(welcomeSeenKey(user.id), "1");
+    setShowWelcome(false);
+  };
+
+  // Shared between the welcome hero's feature cards and the ID card
+  // panel below - both need "the events this participant is actually
+  // registered for," computed once rather than duplicated inline twice.
+  const registeredEvents = useMemo(
+    () => events.filter((e) => registration?.eventIds?.includes?.(e.id)),
+    [events, registration]
+  );
 
   const downloadIdCard = async () => {
     if (!cardRef.current) return;
@@ -67,13 +110,51 @@ export default function Dashboard() {
     }
   };
 
-  return (
-    <div className="max-w-4xl mx-auto px-6 py-14">
-      <p className="text-arc text-[11px] tracking-cinematic uppercase mb-3">My Dashboard</p>
-      <h1 className="font-serif text-3xl sm:text-4xl text-offwhite mb-2">Welcome, {user?.name}</h1>
-      <p className="text-offwhite/50 mb-10">{user?.collegeName}</p>
+  // "DOWNLOAD ID CARD" on the welcome hero should actually download the
+  // card (not just dismiss the hero and leave the participant to go find
+  // the button below) - runs the real export, then dismisses.
+  const handleWelcomeDownloadIdCard = async () => {
+    dismissWelcome();
+    await downloadIdCard();
+  };
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+  // "VIEW MY EVENTS" dismisses the one-time hero and smooth-scrolls down
+  // to the normal dashboard content - "the rest of the normal dashboard
+  // ... continues below it on scroll" per the brief, rather than
+  // navigating away from /dashboard entirely.
+  const handleWelcomeViewEvents = () => {
+    dismissWelcome();
+    requestAnimationFrame(() => {
+      dashboardContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  return (
+    <div>
+      {/*
+        Section 5C-adjacent exception: the ONE deliberate full-viewport
+        hero in this app, per App.jsx's "no marketing hero anywhere"
+        scope note - justified because this is gated (registration.status
+        === "approved"), post-login, and one-time (see welcomeSeenKey
+        above), not public/pre-approval marketing. Rendered above the
+        normal dashboard content, which continues below it on scroll -
+        never in place of it.
+      */}
+      {showWelcome && (
+        <ApprovalHero
+          participantName={user?.name || "Participant"}
+          registeredEvents={registeredEvents}
+          onDownloadIdCard={handleWelcomeDownloadIdCard}
+          onViewEvents={handleWelcomeViewEvents}
+        />
+      )}
+
+      <div ref={dashboardContentRef} className="max-w-4xl mx-auto px-6 py-14">
+        <p className="text-arc text-[11px] tracking-cinematic uppercase mb-3">My Dashboard</p>
+        <h1 className="font-serif text-3xl sm:text-4xl text-offwhite mb-2">Welcome, {user?.name}</h1>
+        <p className="text-offwhite/50 mb-10">{user?.collegeName}</p>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         <div>
           <h2 className="font-heading text-sm uppercase tracking-wider text-offwhite/70 mb-4">Your Digital ID Card</h2>
           {/*
@@ -88,7 +169,7 @@ export default function Dashboard() {
             ref={cardRef}
             registration={registration || { registrationCode: "Pending sync" }}
             user={user}
-            events={events.filter((e) => registration?.eventIds?.includes?.(e.id))}
+            events={registeredEvents}
           />
           <Button className="w-full mt-4" onClick={downloadIdCard}>Download as PDF</Button>
           <p className="text-xs text-offwhite/40 mt-3 text-center">
@@ -136,6 +217,7 @@ export default function Dashboard() {
             </form>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

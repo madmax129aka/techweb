@@ -84,6 +84,66 @@ export default {
         success: "#22C55E",
         warning: "#F59E0B",
         danger: "#EF4444",
+
+        /*
+         * Standard shadcn/ui token names, wired to the CSS custom
+         * properties defined in index.css's `:root` (which themselves
+         * point at colors already used elsewhere in this app - see the
+         * comment there for the full rationale). These exist ONLY so
+         * the shadcn-style primitives (components/ui/button.jsx,
+         * badge.jsx, card.jsx - lowercase, a separate thing from this
+         * file's own PascalCase-consuming design system below) resolve
+         * bg-background/text-foreground/bg-primary/etc. to real colors.
+         *
+         * NOTE: `ring` is NOT added here - this file already has a
+         * `colors.ring` object above (the four-color logo ring:
+         * red/blue/green/yellow) with a completely different meaning,
+         * and overwriting it with a single hex string would break every
+         * existing `ring-red`/`ring-blue`/etc. usage referencing that
+         * object. The shadcn convention's separate "focus ring" concept
+         * is wired via Tailwind's dedicated `ringColor` key instead
+         * (see theme.extend.ringColor below), which does not collide.
+         */
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        card: {
+          DEFAULT: "var(--card)",
+          foreground: "var(--card-foreground)",
+        },
+        popover: {
+          DEFAULT: "var(--popover)",
+          foreground: "var(--popover-foreground)",
+        },
+        primary: {
+          DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
+        },
+        secondary: {
+          DEFAULT: "var(--secondary)",
+          foreground: "var(--secondary-foreground)",
+        },
+        muted: {
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
+        },
+        accent: {
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
+        },
+        destructive: {
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
+        },
+        border: "var(--border)",
+        input: "var(--input)",
+      },
+      ringColor: {
+        DEFAULT: "var(--ring)",
+      },
+      borderRadius: {
+        lg: "var(--radius, 0.75rem)",
+        md: "calc(var(--radius, 0.75rem) - 2px)",
+        sm: "calc(var(--radius, 0.75rem) - 4px)",
       },
       fontFamily: {
         display: ["Orbitron", "sans-serif"],

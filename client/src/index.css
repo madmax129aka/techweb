@@ -24,6 +24,55 @@
   --color-accent: #22D3EE;        /* = tailwind `arc` - the cyan used on "Welcome Back" / links / focus rings */
   --color-text-primary: #F5F3F0;  /* = tailwind `offwhite` - primary body/heading text on the dark base */
   --color-text-muted: rgba(245, 243, 240, 0.55); /* = tailwind `offwhite` at reduced opacity - secondary/de-emphasized text */
+
+  /*
+   * Standard shadcn/ui design-token set, added ONLY so the shadcn-style
+   * primitives under components/ui/button.jsx, badge.jsx, and card.jsx
+   * (the lowercase files - the ApprovalHero/liquid-metal-hero feature's
+   * own dependency, NOT this app's existing PascalCase Button/Badge/Card
+   * design system) resolve to real colors instead of rendering unstyled.
+   *
+   * The integration instructions for that feature only named two tokens
+   * explicitly (--background -> the Login page's deep charcoal-red
+   * #12080a, --foreground -> the TechAstra off-white #F5F3F0) - but the
+   * actual shadcn Button/Badge/Card boilerplate these primitives are
+   * built from also references --primary/--secondary/--muted/--accent/
+   * --destructive/--card/--popover/--border/--input/--ring. Left
+   * undefined, those would be invalid Tailwind color references that
+   * generate no CSS at all, so every one is mapped here to a hex/rgba
+   * value from TechAstra's ALREADY-EXISTING palette - nothing new was
+   * invented, this just gives the shadcn convention's variable names a
+   * home pointing at colors that already exist elsewhere in this file/
+   * tailwind.config.js.
+   *
+   * NOTE ON FORMAT: the shadcn/ui convention normally stores these as
+   * space-separated HSL triplets (e.g. "222.2 84% 4.9%") so
+   * tailwind.config.js can wrap them in hsl(var(--x)). That conversion
+   * introduces a real chance of a transcription error with no way to
+   * visually verify the result in this sandbox, so these are plain hex/
+   * rgba strings instead, referenced directly as var(--x) (no hsl()
+   * wrapper) in tailwind.config.js - functionally identical, just a
+   * more directly verifiable format here.
+   */
+  --background: #12080a;
+  --foreground: #F5F3F0;
+  --card: #1a0d0f;
+  --card-foreground: #F5F3F0;
+  --popover: #1a0d0f;
+  --popover-foreground: #F5F3F0;
+  --primary: #AA0505;
+  --primary-foreground: #F5F3F0;
+  --secondary: #1A0505;
+  --secondary-foreground: #F5F3F0;
+  --muted: #1a0d0f;
+  --muted-foreground: #b8a9a9;
+  --accent: #22D3EE;
+  --accent-foreground: #0D0303;
+  --destructive: #EF4444;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.15);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #22D3EE;
 }
 
 html {
