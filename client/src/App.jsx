@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Link, Navigate } from "react-router-dom";
+import { Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HelpDeskPanel from "./components/panels/HelpDeskPanel";
@@ -22,9 +22,18 @@ import VolunteerPortal from "./pages/portals/VolunteerPortal";
 import AdminPortal from "./pages/portals/AdminPortal";
 
 export default function App() {
+  const { pathname } = useLocation();
+  // "The Core" cinematic Login scene (Login.jsx) renders its own
+  // full-viewport header, cursor, and background - it is intentionally
+  // NOT another page living inside the site's normal chrome. Skipping
+  // the global Navbar/Footer/top-padding ONLY for this one route (every
+  // other page is completely unaffected) avoids stacking two headers/
+  // cursors/footers on top of each other on /login.
+  const isCinematicLogin = pathname === "/login";
+
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      {!isCinematicLogin && <Navbar />}
       {/*
         The navbar is `fixed` (so it can transparently overlay hero
         imagery on pages like EventDetail's banner), so normal page flow
@@ -33,9 +42,11 @@ export default function App() {
         homepage exempted from it (a full-bleed hero running behind the
         transparent nav), but this app's scope was corrected to be the
         Registration Portal only, with no homepage of its own (see
-        Events.jsx, the actual entry point).
+        Events.jsx, the actual entry point). /login is the one other
+        exception, for the reason above - its own Login.css handles the
+        page's full-viewport layout itself.
       */}
-      <main className="flex-1 pt-[76px]">
+      <main className={isCinematicLogin ? "flex-1" : "flex-1 pt-[76px]"}>
         <Routes>
           {/* This app's entry point is /events, not a marketing
               homepage - the separate main site links "Register"
@@ -110,13 +121,16 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      <Footer />
+      {!isCinematicLogin && <Footer />}
 
       {/*
         Help Desk is still a slide-in overlay panel (mounted once here,
         alongside FullScreenMenu) - only Registration moved off this
         pattern and onto routed pages. See PanelContext for how any page
-        opens this via usePanels().openPanel("help").
+        opens this via usePanels().openPanel("help"). Left mounted on
+        every route including /login, since Login's own header still
+        needs somewhere for its hamburger to open a menu from, and this
+        is also where Help Desk's panel state lives.
       */}
       <HelpDeskPanel />
     </div>

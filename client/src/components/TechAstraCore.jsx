@@ -1,14 +1,14 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, ContactShadows } from "@react-three/drei";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Environment } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import TechAstraCoreErrorBoundary from "./TechAstraCoreErrorBoundary";
 import TechAstraCoreStatic from "./TechAstraCoreStatic";
 
 /**
  * SECTION 5C - "TechAstra Core": an ORIGINAL 3D symbol - a central
- * glowing crystal core with six smaller gemstones orbiting it on tilted
- * elliptical paths, one per TechAstra event track/energy.
+ * glowing crystal core with six smaller gemstones orbiting it, one per
+ * TechAstra event track/energy.
  *
  * DO NOT rename this file/component/any UI text after, or model its
  * geometry/materials on, any third-party trademarked character, film, or
@@ -16,76 +16,69 @@ import TechAstraCoreStatic from "./TechAstraCoreStatic";
  * the individual gems) and the faceted-gem geometry are original to this
  * project - this file and its siblings must stay that way.
  *
- * MATERIAL/LIGHTING BUG FIX: the previous version of this component
- * rendered as flat, matte, cartoonish shapes instead of glass, and the
- * root causes were:
- *   1. Orbiting stones used `octahedronGeometry` with `detail: 0` - only
- *      8 flat triangular faces, which reads as a hard-edged 2D "diamond"
- *      cutout rather than a faceted 3D gem. Now `icosahedronGeometry`
- *      with `detail: 1` (80 faces) on every stone.
- *   2. Stone material used fully-saturated flat colors (e.g. solid
- *      "#22D3EE") as the base `color`, plus a `metalness` property that
- *      has no place on a glass material at all. Now every stone's
- *      `color` is a pale, near-white tint of its hue (STONE_CONFIG's
- *      `paleColor`) so light actually transmits through it rather than
- *      reading as a painted solid; the saturated hex only drives the
- *      `emissive` glow and the bloom pass's color.
- *   3. Stone `transmission` (0.3) and `roughness` (0.25) were both far
- *      outside a convincing glass range - low transmission makes it
- *      opaque, and 0.25 roughness is matte/frosted, not polished glass.
- *      Now `transmission: 1`, `roughness` in the 0.05-0.15 band, with
- *      `ior`/`clearcoat`/`clearcoatRoughness` added (previously missing
- *      on stones entirely).
- *   4. `<Environment preset="night">` - a near-black HDRI with almost
- *      nothing bright in it - gives a transmissive material nothing to
- *      refract/reflect, which is most of why the previous result looked
- *      like flat plastic instead of glass. Switched to `"studio"`, a
- *      bright, evenly-lit HDRI built exactly for showing off reflective/
- *      refractive product materials.
- *   5. Lighting was a single flat ambient + a single directional light
- *      with no distinction between a "key" and "fill" light, which is
- *      why the previous render had one flat highlight dot rather than
- *      real specular falloff. Now a brighter angled key light (upper
- *      front) plus a dimmer, cooler-toned fill light from the opposite
- *      side, in addition to the ambient and the core's own inner glow.
- *   6. No grounding/contact shadow at all, so the object read as a flat
- *      sprite floating with no sense of it occupying real 3D space. Now
- *      drei's <ContactShadows> renders a soft, blurred dark ellipse
- *      beneath the whole group - this doesn't require setting up real
- *      shadow-casting lights (which would need calibrating a shadow
- *      camera frustum for very little visual gain here), just a
- *      purpose-built "soft ambient-occlusion-like darkening" as
- *      specified as the minimum acceptable option.
+ * THIS FILE NOW FOLLOWS AN EXACT, LITERAL BUILD SPEC ("The Core Cinematic
+ * Scene") GIVEN VERBATIM BY THE USER - every geometry arg, material
+ * property, light value, and animation constant below is copied from
+ * that spec exactly, not re-derived or "improved." This deliberately
+ * REVERSES several visual fixes made in the immediately prior session
+ * (in response to a "looks flat/plastic" bug report), because the new
+ * spec explicitly hardcodes different values for the same properties.
+ * Every reversal is called out below so it isn't mistaken for an
+ * oversight:
+ *   - <Environment preset="night" /> - the prior fix swapped this to
+ *     "studio" (a brighter HDRI) to fix a flat/plastic look. The new
+ *     spec explicitly requires "night" ("without it the glass will
+ *     render flat regardless of material settings" - so per the new
+ *     spec, "night" is treated as sufficient once combined with its
+ *     given material/light values).
+ *   - Stone material `color` is now the fully-saturated STONE_CONFIG hue
+ *     directly (e.g. solid "#3DD9EB"). The prior fix used a pale
+ *     near-white tint as the base `color` instead, reserving the
+ *     saturated hue for `emissive` only. The new spec's OrbitStone code
+ *     sets `color={color}` (the saturated hue) AND `emissive={color}`.
+ *   - Stone geometry is `octahedronGeometry` with `detail: 1` (per the
+ *     spec's literal `<octahedronGeometry args={[size, 1]} />`) - not
+ *     the icosahedron swap made in the prior fix.
+ *   - Parallax is no longer gated to fine-pointer (mouse) devices only -
+ *     the spec's `Rig` applies `state.pointer`-based tilt unconditionally
+ *     to whatever device is in use, with no fine-pointer check.
+ *   - The core's own inner point light (a fixed cyan pointLight mounted
+ *     inside CoreGem) and the ContactShadows grounding shadow from the
+ *     prior fix are both gone - the spec's exact `Scene` lighting is
+ *     ambient + one directional + one scene-level pointLight only, and
+ *     it does not include any contact/ground shadow at all.
+ *
+ * FALLBACK ARCHITECTURE (preserved from before, not part of the literal
+ * spec code itself - the spec only specifies WHAT to fall back to, not
+ * HOW to wire the fallback logic in React):
+ *  - WebGL unsupported, or any render error inside the Canvas tree:
+ *    caught by TechAstraCoreErrorBoundary / a supportsWebGL() check,
+ *    rendering TechAstraCoreStatic.jsx (the pure-CSS fallback) in this
+ *    component's exact layout slot - matches the spec's "On WebGL init
+ *    failure ... render a static PNG/SVG fallback ... in the same
+ *    .core-canvas-frame slot" requirement.
+ *  - prefers-reduced-motion: per the spec's explicit instruction ("freeze
+ *    useFrame updates ... render one static frame"), this NO LONGER
+ *    swaps to the static CSS fallback (which is what the prior
+ *    implementation did) - the real WebGL Canvas still mounts, but every
+ *    useFrame callback below early-returns before touching
+ *    rotation/position/scale, so the gem renders once at its initial
+ *    pose and never animates.
+ *  - off-screen: Canvas's `frameloop` prop toggles to "never" via an
+ *    IntersectionObserver, pausing all rendering rather than burning
+ *    CPU/battery on something nobody can see (not in the literal spec
+ *    code, but a reasonable performance carryover with no conflicting
+ *    spec instruction).
  *
  * VERIFICATION CAVEAT: three/@react-three/fiber/drei/postprocessing are
  * listed in package.json but this sandbox has no npm registry access, so
  * none of these packages could actually be installed or rendered in a
- * browser here - this component has NOT been runtime-verified, and no
- * screenshot could be taken to confirm the fix visually. Please test for
- * real after `npm install` and confirm it now reads as a polished glass
- * gem rather than flat plastic before considering this done.
- *
- * Fallback matrix (all render TechAstraCoreStatic.jsx, the pure-CSS
- * version, in this component's exact layout position - never a blank
- * gap):
- *  - prefers-reduced-motion: renders the static graphic with
- *    animated=false (a genuinely still single frame) and never even
- *    creates a WebGL context.
- *  - WebGL unsupported / context creation fails / any render error inside
- *    the Canvas tree: caught by TechAstraCoreErrorBoundary, renders the
- *    static graphic with animated=true (so there's still some life to
- *    the page even without real 3D).
- *  - off-screen: Canvas's `frameloop` prop toggles to "never" via an
- *    IntersectionObserver, pausing all rendering rather than burning
- *    CPU/battery on something nobody can see.
+ * browser here - this component has NOT been runtime-verified. Please
+ * test for real after `npm install`.
  */
 
 function prefersReducedMotion() {
   return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-}
-
-function isFinePointer() {
-  return typeof window !== "undefined" && (window.matchMedia?.("(pointer: fine)").matches ?? false);
 }
 
 function supportsWebGL() {
@@ -97,187 +90,112 @@ function supportsWebGL() {
   }
 }
 
-/**
- * Per-track color + orbital parameters for each of the six "Nexus
- * Stones". `emissiveColor` is the intended saturated hue (drives the
- * inner glow + bloom tint); `paleColor` is the actual material `color` -
- * a near-white tint of that same hue, per the fix list's "pale icy cyan,
- * not solid teal, so light passes through" requirement. Colors are
- * illustrative (per the brief) - swap freely once TechAstra's real
- * per-track branding colors are finalized. This palette is original to
- * TechAstra, not copied from any prior theme this app has used.
- *
- * `period` (seconds per full revolution), `radius`, `tilt` (how
- * compressed the Z-axis of the ellipse is relative to X, i.e. how
- * "edge-on" this stone's orbit plane looks), `phase` (starting angle,
- * so stones don't all begin lined up), and `spin` (own-axis rotation
- * speed) are all varied per stone for visual richness, per the brief.
- */
+// Exact STONE_CONFIG from the spec - six stones, unique radius/speed/
+// tilt/phase/size each, per the "do not make them uniform" instruction.
 const STONE_CONFIG = [
-  { emissiveColor: "#22D3EE", paleColor: "#D8F8FD", label: "Technical", radius: 2.2, period: 18, tilt: 0.35, phase: 0, spin: 1.4 },
-  { emissiveColor: "#B565F0", paleColor: "#EFE1FD", label: "Non-Technical", radius: 2.6, period: 27, tilt: 0.55, phase: 1.1, spin: 1.0 },
-  { emissiveColor: "#F2B84B", paleColor: "#FDECC9", label: "Flagship", radius: 1.9, period: 15, tilt: 0.2, phase: 2.4, spin: 1.8 },
-  { emissiveColor: "#34D399", paleColor: "#DAF7EA", label: "Robotics", radius: 3.0, period: 34, tilt: 0.65, phase: 3.6, spin: 0.7 },
-  { emissiveColor: "#E8495B", paleColor: "#FCDFE2", label: "Esports", radius: 2.4, period: 22, tilt: 0.45, phase: 4.5, spin: 1.2 },
-  { emissiveColor: "#4C8DF6", paleColor: "#DEE9FE", label: "Creative", radius: 2.8, period: 40, tilt: 0.5, phase: 5.5, spin: 0.9 },
+  { color: "#3DD9EB", radius: 1.6, speed: 0.045, tilt: 0.2, phase: 0.0, size: 0.16 },
+  { color: "#8B5CF6", radius: 1.9, speed: 0.032, tilt: -0.3, phase: 1.1, size: 0.14 },
+  { color: "#F59E0B", radius: 1.4, speed: 0.055, tilt: 0.35, phase: 2.3, size: 0.15 },
+  { color: "#22C55E", radius: 2.1, speed: 0.028, tilt: -0.15, phase: 3.4, size: 0.13 },
+  { color: "#EF4444", radius: 1.7, speed: 0.038, tilt: 0.4, phase: 4.5, size: 0.15 },
+  { color: "#3B82F6", radius: 1.95, speed: 0.03, tilt: -0.25, phase: 5.6, size: 0.14 },
 ];
 
-/** One orbiting gemstone: a small, richly-faceted glass gem with its own elliptical path, own-axis spin, and emissive glow. */
-function OrbitingStone({ emissiveColor, paleColor, radius, period, tilt, phase, spin }) {
-  const groupRef = useRef(null);
-  const meshRef = useRef(null);
-
+/** Core gem - exact geometry/material/animation values from the spec. `reducedMotion` freezes rotation/pulse (spec: "render one static frame"). */
+function CoreGem({ reducedMotion }) {
+  const ref = useRef();
   useFrame((state, delta) => {
-    const t = state.clock.elapsedTime * (Math.PI * 2 / period) + phase;
-
-    // Elliptical orbit position, per the brief's formula
-    // (x = radius*cos(t), z = radius*sin(t)*tiltFactor), tracing a path
-    // tilted relative to the core rather than a flat circle.
-    if (groupRef.current) {
-      groupRef.current.position.x = radius * Math.cos(t);
-      groupRef.current.position.z = radius * Math.sin(t) * tilt;
-      groupRef.current.position.y = Math.sin(t * 1.3) * 0.2 * tilt;
-    }
-
-    // Independent own-axis spin, decoupled from orbital motion.
-    if (meshRef.current) {
-      meshRef.current.rotation.x += delta * spin;
-      meshRef.current.rotation.y += delta * spin * 0.7;
-    }
+    if (reducedMotion || !ref.current) return;
+    ref.current.rotation.y += delta * 0.05; // one revolution ~126s
+    const t = state.clock.getElapsedTime();
+    const pulse = 1.0 + Math.sin(t * 0.6) * 0.03; // breathing scale 0.97-1.03
+    ref.current.scale.setScalar(pulse);
   });
-
   return (
-    <group ref={groupRef}>
-      <mesh ref={meshRef} castShadow>
-        {/* detail=1 (80 faces) instead of the previous detail=0 octahedron
-            (8 flat faces) - this is the single biggest fix for the
-            "flat, hard-edged diamond" complaint. A gem this small still
-            reads as faceted rather than smooth at this level of detail. */}
-        <icosahedronGeometry args={[0.3, 1]} />
-        <meshPhysicalMaterial
-          color={paleColor}
-          emissive={emissiveColor}
-          emissiveIntensity={0.55}
-          transmission={1}
-          roughness={0.08}
-          thickness={1.2}
-          ior={1.5}
-          clearcoat={1}
-          clearcoatRoughness={0.1}
-          attenuationColor={emissiveColor}
-          attenuationDistance={0.8}
-        />
-      </mesh>
-    </group>
-  );
-}
-
-/** The central "TechAstra Core" gem: larger faceted glass shape with a warm inner glow, slow spin, and a breathing scale pulse. */
-function CoreGem() {
-  const meshRef = useRef(null);
-
-  useFrame((state, delta) => {
-    if (!meshRef.current) return;
-
-    // Slow independent rotation, ~30s per revolution per the brief.
-    meshRef.current.rotation.y += delta * (Math.PI * 2 / 30);
-    meshRef.current.rotation.x += delta * 0.05;
-
-    // Subtle breathing pulse: 1.0 -> 1.03 on a sine wave, not a hard loop.
-    const pulse = 1 + Math.sin(state.clock.elapsedTime * 0.8) * 0.015;
-    meshRef.current.scale.setScalar(pulse);
-  });
-
-  return (
-    <mesh ref={meshRef} castShadow>
-      {/* detail=1 keeps facets visible (a "cut gem" look) rather than a
-          smoothed-out sphere - a higher detail value would round it off. */}
-      <icosahedronGeometry args={[1.1, 1]} />
+    <mesh ref={ref}>
+      <icosahedronGeometry args={[0.85, 1]} />
       <meshPhysicalMaterial
-        color="#eafeff"
         transmission={1}
-        roughness={0.1}
         thickness={1.4}
+        roughness={0.08}
         ior={1.5}
         clearcoat={1}
         clearcoatRoughness={0.1}
-        attenuationDistance={2.5}
-        attenuationColor="#22D3EE"
+        color="#dff7f9"
+        emissive="#3DD9EB"
+        emissiveIntensity={0.15}
       />
-      {/* Faint white-cyan glow from inside the core mesh itself. */}
-      <pointLight color="#8FEFFF" intensity={2.2} distance={4} decay={2} />
     </mesh>
   );
 }
 
-/** Whole-group parallax tilt on mouse move (desktop/fine-pointer only) - subtle, never distracting. */
-function ParallaxGroup({ enableParallax, children }) {
-  const groupRef = useRef(null);
-  const { pointer } = useThree();
-
-  useFrame(() => {
-    if (!groupRef.current || !enableParallax) return;
-    const targetRotX = pointer.y * 0.12;
-    const targetRotY = pointer.x * 0.18;
-    groupRef.current.rotation.x += (targetRotX - groupRef.current.rotation.x) * 0.04;
-    groupRef.current.rotation.y += (targetRotY - groupRef.current.rotation.y) * 0.04;
+/** Orbiting stone - exact geometry/material/animation values from the spec. `reducedMotion` freezes orbit/spin (spec: "render one static frame"). */
+function OrbitStone({ color, radius, speed, tilt, phase, size, reducedMotion }) {
+  const ref = useRef();
+  useFrame((state, delta) => {
+    if (reducedMotion || !ref.current) return;
+    const t = state.clock.getElapsedTime() * speed + phase;
+    ref.current.position.set(
+      Math.cos(t) * radius,
+      Math.sin(t) * radius * tilt,
+      Math.sin(t) * radius
+    );
+    ref.current.rotation.x += delta * 0.6;
+    ref.current.rotation.y += delta * 0.4;
   });
-
-  return <group ref={groupRef}>{children}</group>;
+  return (
+    <mesh ref={ref}>
+      <octahedronGeometry args={[size, 1]} />
+      <meshPhysicalMaterial
+        transmission={1}
+        thickness={0.8}
+        roughness={0.1}
+        ior={1.45}
+        clearcoat={1}
+        color={color}
+        emissive={color}
+        emissiveIntensity={0.4}
+      />
+    </mesh>
+  );
 }
 
-function Scene({ enableParallax }) {
+/** Whole-group parallax rig - exact lerp factor/target formula from the spec. `reducedMotion` freezes the tilt (spec applies "freeze useFrame updates" to every useFrame hook, this one included). */
+function Rig({ reducedMotion, children }) {
+  const group = useRef();
+  useFrame((state) => {
+    if (reducedMotion || !group.current) return;
+    const targetX = state.pointer.x * 0.25;
+    const targetY = state.pointer.y * 0.15;
+    group.current.rotation.y += (targetX - group.current.rotation.y) * 0.05;
+    group.current.rotation.x += (-targetY - group.current.rotation.x) * 0.05;
+  });
+  return <group ref={group}>{children}</group>;
+}
+
+function Scene({ reducedMotion }) {
   return (
     <>
-      {/* Soft fill-everything ambient, kept low - most of the shape
-          reading should come from the key/fill lights + environment
-          reflections below, not flat ambient light (flat ambient with
-          no directional key light was a big part of why the previous
-          render had only one fake-looking highlight dot). */}
-      <ambientLight intensity={0.25} />
-
-      {/* Key light: bright, angled from the upper-front - this is what
-          creates a real, moving specular highlight and directional
-          shading across the facets as the object rotates, rather than
-          flat even lighting. */}
-      <directionalLight position={[3, 5, 4]} intensity={2.2} color="#FFF6E8" />
-
-      {/* Fill light: dimmer, cooler-toned, from the opposite side - softens
-          the shadow side of the key light instead of leaving it pure
-          black, without competing with the key light for the "main"
-          highlight. */}
-      <directionalLight position={[-4, -1.5, -2]} intensity={0.5} color="#8FD8FF" />
-
-      {/* Environment lighting is what makes a transmissive glass material
-          actually read as glass - without a bright HDRI to reflect/
-          refract, it looks flat and fake. "studio" is a bright, evenly
-          lit preset built for exactly this (showing off reflective/
-          refractive product materials) - the previous "night" preset is
-          near-black and gave transmission almost nothing to work with,
-          which was a primary cause of the flat/plastic look. */}
+      <ambientLight intensity={0.15} />
+      <directionalLight position={[3, 4, 2]} intensity={1.2} color="#ffffff" />
+      <pointLight position={[0, 0, 0]} intensity={0.6} color="#3DD9EB" distance={3} />
+      {/* Environment lighting - required per the spec for the glass
+          material to read as glass at all. Wrapped in Suspense since
+          drei's Environment loads its HDRI asynchronously (not in the
+          literal spec snippet, but necessary for this to not throw). */}
       <Suspense fallback={null}>
-        <Environment preset="studio" />
+        <Environment preset="night" />
       </Suspense>
 
-      <ParallaxGroup enableParallax={enableParallax}>
-        <CoreGem />
-        {STONE_CONFIG.map((stone) => (
-          <OrbitingStone key={stone.label} {...stone} />
+      <Rig reducedMotion={reducedMotion}>
+        <CoreGem reducedMotion={reducedMotion} />
+        {STONE_CONFIG.map((s, i) => (
+          <OrbitStone key={i} {...s} reducedMotion={reducedMotion} />
         ))}
-      </ParallaxGroup>
+      </Rig>
 
-      {/* Soft grounding shadow beneath the whole group - a self-contained
-          blurred blob (does not require any light to have castShadow
-          enabled, no shadow-camera frustum to calibrate), satisfying the
-          "at minimum a soft ambient-occlusion-like darkening beneath it"
-          requirement without the complexity of a full real-time shadow
-          setup for an object that has no literal ground plane around it. */}
-      <ContactShadows position={[0, -1.9, 0]} opacity={0.45} scale={8} blur={2.6} far={3} color="#000000" />
-
-      {/* Subtle bloom halo on the core/stones' emissive glow - tuned to
-          the brief's 0.4-0.7 range with a ~0.2 luminance threshold. */}
       <EffectComposer>
-        <Bloom intensity={0.55} luminanceThreshold={0.2} luminanceSmoothing={0.9} mipmapBlur />
+        <Bloom intensity={0.55} luminanceThreshold={0.2} luminanceSmoothing={0.9} />
       </EffectComposer>
     </>
   );
@@ -287,12 +205,10 @@ export default function TechAstraCore({ size = 320, className = "" }) {
   const containerRef = useRef(null);
   const [inView, setInView] = useState(true);
   const [webglOk, setWebglOk] = useState(true);
-  const [finePointer, setFinePointer] = useState(false);
   const reduceMotion = useMemo(prefersReducedMotion, []);
 
   useEffect(() => {
     setWebglOk(supportsWebGL());
-    setFinePointer(isFinePointer());
   }, []);
 
   // Pause rendering entirely once scrolled out of view, rather than
@@ -307,17 +223,12 @@ export default function TechAstraCore({ size = 320, className = "" }) {
     return () => observer.disconnect();
   }, []);
 
+  // WebGL unsupported: the only case that swaps to the static CSS
+  // fallback entirely - prefers-reduced-motion is handled INSIDE the
+  // Canvas now (frozen useFrame hooks), per the spec.
   const fallback = <TechAstraCoreStatic size={size} animated className={className} />;
-
-  // Static/no-WebGL/reduced-motion all fall back to the pure-CSS gem -
-  // no point paying for a WebGL context just to render something static
-  // when prefers-reduced-motion is set, and no way to render WebGL at
-  // all when it's unsupported.
   if (!webglOk) {
     return fallback;
-  }
-  if (reduceMotion) {
-    return <TechAstraCoreStatic size={size} animated={false} className={className} />;
   }
 
   return (
@@ -325,15 +236,12 @@ export default function TechAstraCore({ size = 320, className = "" }) {
       <TechAstraCoreErrorBoundary fallback={fallback}>
         <Canvas
           dpr={[1, 2]}
+          camera={{ position: [0, 0, 5], fov: 45 }}
           gl={{ alpha: true, antialias: true }}
-          camera={{ position: [0, 0, 6.5], fov: 42 }}
           frameloop={inView ? "always" : "never"}
           style={{ background: "transparent" }}
         >
-          {/* Parallax is desktop/mouse-only, per the brief - mobile keeps
-              the ambient orbit/rotation animation with no pointer-driven
-              tilt at all (there's no mouse to derive it from). */}
-          <Scene enableParallax={finePointer} />
+          <Scene reducedMotion={reduceMotion} />
         </Canvas>
       </TechAstraCoreErrorBoundary>
     </div>

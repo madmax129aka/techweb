@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 /**
  * Custom cursor styled as Vision's (Avengers) Mind Stone - a small
@@ -18,6 +19,12 @@ import React, { useEffect, useRef, useState } from "react";
  * Automatically disables itself on touch/coarse-pointer devices (phones,
  * tablets) via a matchMedia check, since there is no mouse to track and
  * a hidden native cursor would leave touch users with no cursor at all.
+ *
+ * Also disables itself on /login - "The Core" cinematic Login scene
+ * (Login.jsx) has its OWN two-ring custom cursor per its exact build
+ * spec, and mounting both at once would fight over the same pointer
+ * (two independent DOM elements both trying to represent "the cursor").
+ * Every other route is unaffected.
  */
 export default function VisionCursor() {
   const dotRef = useRef(null);
@@ -25,8 +32,20 @@ export default function VisionCursor() {
   const [enabled, setEnabled] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [visible, setVisible] = useState(false);
+  const { pathname } = useLocation();
+  const isCinematicLogin = pathname === "/login";
 
   useEffect(() => {
+    if (isCinematicLogin) {
+      // Explicitly turn this cursor off (not just "skip turning it on") -
+      // without this, navigating client-side FROM another route INTO
+      // /login while this was already `enabled` would leave it rendering
+      // with its listeners just removed below, instead of actually
+      // disappearing.
+      setEnabled(false);
+      return; // Login.jsx supplies its own cursor - see the file-level note above.
+    }
+
     const isFinePointer = window.matchMedia?.("(pointer: fine)").matches;
     if (!isFinePointer) return; // touch/coarse pointer - leave native cursor alone
 
@@ -100,8 +119,17 @@ export default function VisionCursor() {
       document.removeEventListener("mouseleave", onLeaveWindow);
       cancelAnimationFrame(frame);
     };
+    // isCinematicLogin is a REAL dependency here (not just satisfying the
+    // linter) - VisionCursor is mounted once at the app root (main.jsx),
+    // outside the page-switching area, so navigating between routes via
+    // React Router is a re-render, not a remount. Without this in the
+    // deps array, this effect would only ever check isCinematicLogin
+    // once (on first mount) and never again - so navigating client-side
+    // INTO or OUT OF /login after the initial page load would leave this
+    // cursor stuck in whatever state it started in, instead of actually
+    // toggling to match the current route.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isCinematicLogin]);
 
   if (!enabled) return null;
 
