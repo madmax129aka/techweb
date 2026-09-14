@@ -3,9 +3,12 @@ import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 /**
- * Standard shadcn/ui `Badge` primitive - see the same "intentionally
- * separate from the app's own PascalCase Badge.jsx" note in button.jsx.
- * Only liquid-metal-hero.jsx should ever import this lowercase version.
+ * Standard shadcn/ui `Badge` primitive. See the file-level note in
+ * `components/shadcn/button.jsx` for why this now lives in its own
+ * `components/shadcn/` folder rather than `components/ui/` (a
+ * Windows/macOS case-insensitive-filesystem collision with this app's
+ * existing `components/ui/Badge.jsx`). Only liquid-metal-hero.jsx should
+ * ever import this version - use the app's own Badge.jsx everywhere else.
  */
 const badgeVariants = cva(
   "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",

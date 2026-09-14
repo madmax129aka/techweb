@@ -1,9 +1,9 @@
 import React, { useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { LiquidMetal } from "@paper-design/shaders-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/shadcn/button";
+import { Badge } from "@/components/shadcn/badge";
+import { Card, CardContent } from "@/components/shadcn/card";
 import { cn } from "@/lib/utils";
 
 /**

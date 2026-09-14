@@ -2,10 +2,12 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Standard shadcn/ui `Card` primitive family - see the same
- * "intentionally separate from the app's own PascalCase Card.jsx" note
- * in button.jsx. Only liquid-metal-hero.jsx should ever import this
- * lowercase version.
+ * Standard shadcn/ui `Card` primitive family. See the file-level note in
+ * `components/shadcn/button.jsx` for why this now lives in its own
+ * `components/shadcn/` folder rather than `components/ui/` (a
+ * Windows/macOS case-insensitive-filesystem collision with this app's
+ * existing `components/ui/Card.jsx`). Only liquid-metal-hero.jsx should
+ * ever import this version - use the app's own Card.jsx everywhere else.
  */
 const Card = React.forwardRef(({ className, ...props }, ref) => (
   <div ref={ref} className={cn("rounded-xl border bg-card text-card-foreground shadow", className)} {...props} />
