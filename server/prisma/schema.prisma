@@ -1,0 +1,145 @@
+// TechAstra Symposium Portal - Prisma schema
+// Run `npx prisma migrate dev --name init` after setting DATABASE_URL in .env
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(cuid())
+  name             String
+  email            String   @unique
+  phone            String?
+  passwordHash     String
+  role             String   // participant | registration_team | coordinator | hospitality | certificate_team | volunteer | master_admin
+  collegeName      String?
+  registerNo       String?
+  photoUrl         String?
+  assignedEventId  String?  // for coordinators
+  dutyDesk         String?  // for volunteers
+  dutyTiming       String?  // for volunteers
+  dutyRole         String?  // for volunteers
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  assignedEvent    Event?   @relation(fields: [assignedEventId], references: [id])
+  registration     Registration? @relation("UserRegistration")
+
+  @@index([role])
+}
+
+model Event {
+  id            String   @id @default(cuid())
+  name          String
+  description   String
+  track         String?
+  category      String   @default("technical") // technical | non_technical
+  startTime     DateTime
+  endTime       DateTime
+  fee           Float
+  maxSeats      Int
+  seatsTaken    Int      @default(0)
+  isTeamEvent   Boolean  @default(false)
+  minTeamSize   Int      @default(1)
+  maxTeamSize   Int      @default(1)
+  rulebook      String?
+  venue         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  coordinators  User[]
+
+  @@index([startTime])
+}
+
+model Registration {
+  id                String   @id @default(cuid())
+  registrationCode  String   @unique // e.g. SYM2026-0042
+  userId            String   @unique
+  eventIds          String[] // array of Event ids
+  teamName          String?
+  teamMembers       Json?    // [{name, regNo, role: "lead"|"member"}]
+  collegeName       String?
+  totalAmount       Float
+  transactionId     String?  @unique
+  paymentProofUrl   String?
+  status            String   @default("pending") // pending | approved | rejected
+  rejectionReason   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user              User     @relation("UserRegistration", fields: [userId], references: [id])
+
+  @@index([status])
+}
+
+model Attendance {
+  id             String   @id @default(cuid())
+  registrationId String
+  eventId        String
+  scannedAt      DateTime @default(now())
+  scannedBy      String   // coordinator user id
+
+  @@unique([registrationId, eventId])
+}
+
+model FoodLog {
+  id             String   @id @default(cuid())
+  registrationId String
+  mealSession    String   // breakfast | lunch | snacks
+  collectedAt    DateTime @default(now())
+
+  @@unique([registrationId, mealSession])
+}
+
+model Result {
+  id              String   @id @default(cuid())
+  eventId         String
+  position        Int      // 1, 2, 3
+  registrationId  String
+  lockedBy        String   // coordinator user id
+  lockedAt        DateTime @default(now())
+  overriddenBy    String?  // master admin user id, if edited
+
+  @@unique([eventId, position])
+}
+
+model Certificate {
+  id              String   @id @default(cuid())
+  certificateCode String   @unique
+  registrationId  String
+  eventId         String
+  type            String   // participation | winner
+  pdfUrl          String?
+  issuedAt        DateTime @default(now())
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  message   String
+  createdAt DateTime @default(now())
+  createdBy String
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String?
+  rating    Int
+  comments  String?
+  createdAt DateTime @default(now())
+}
+
+model HelpQuery {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  status    String   @default("open") // open | resolved
+  createdAt DateTime @default(now())
+}
