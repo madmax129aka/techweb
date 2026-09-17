@@ -107,13 +107,20 @@ any real deployment.
 
 ## Demo Events
 
-The seed script currently populates **8 placeholder events** (Coding
-Marathon, Paper Presentation, Hackathon, Tech Quiz, Robo Race, Web Design
-Contest, Poster Presentation, Startup Pitch) with sample times, fees, and
-seat counts. These are **placeholders** — once the real symposium event
-list is finalized, update `server/prisma/seed.js` (`buildDemoEvents()`) or
-add/edit events directly via the Master Admin Portal's Event Management
-tab, then re-seed or use the admin UI.
+The seed script populates the **finalized 15-event list** — 8 Technical +
+7 Non-Technical:
+
+**Technical:** Pen Your Vision, Hack Nexus, Crypt Clash, Trial of Truth,
+Code Rescue, Pixel Protocol, Forensic Alibi, Prompt Arena
+
+**Non-Technical:** Rythm Riot, 70MM Decode, Verbal Combat, Blitz Hunt,
+Plot Twist, Team Fued, Cap Chaos
+
+Sample times, fees, seat counts, venues, and rulebook text in
+`server/prisma/seed.js` (`buildDemoEvents()`) are still illustrative
+placeholders for those specific details — update them there, or add/edit
+events directly via the Master Admin Portal's Event Management tab, once
+the real schedule/fee/venue numbers are finalized.
 
 ## End-to-End Flow (manual test checklist)
 

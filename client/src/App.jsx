@@ -3,6 +3,7 @@ import { Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HelpDeskPanel from "./components/panels/HelpDeskPanel";
+import CinematicBackground from "./components/CinematicBackground";
 
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
@@ -32,7 +33,15 @@ export default function App() {
   const isCinematicLogin = pathname === "/login";
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="app-shell min-h-screen flex flex-col">
+      {/* Single shared cinematic video backdrop for the ENTIRE app - fixed,
+          semi-blurred, dimmed - mounted once here so every route (incl.
+          /login) shows the exact same treatment instead of each page
+          rendering its own separately-tuned video. See CinematicBackground
+          and the .cinematic-bg-* / .app-shell rules in index.css for the
+          stacking-order fix that keeps this actually visible. */}
+      <CinematicBackground />
+
       {!isCinematicLogin && <Navbar />}
       {/*
         The navbar is `fixed` (so it can transparently overlay hero
@@ -46,7 +55,13 @@ export default function App() {
         exception, for the reason above - its own Login.css handles the
         page's full-viewport layout itself.
       */}
-      <main className={isCinematicLogin ? "flex-1" : "flex-1 pt-[76px]"}>
+      {/* Top padding locked to the Navbar's canonical h-14 (56px) - see
+          the note there. Was `pt-[76px]` when the nav still contained
+          the corner logo/watermark and used py-4 padding; the nav is
+          now a slim 56px functional-only bar (logo moved to be the
+          Events hero centerpiece), so this must match or every page
+          gets a 20px empty gap between the nav bottom and its content. */}
+      <main className={isCinematicLogin ? "flex-1" : "flex-1 pt-14"}>
         <Routes>
           {/* This app's entry point is /events, not a marketing
               homepage - the separate main site links "Register"

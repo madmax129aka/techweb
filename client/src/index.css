@@ -220,14 +220,6 @@ h1, h2, h3, h4, h5, h6 {
   animation: shimmer 2.6s ease-in-out infinite;
 }
 
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.animate-marquee {
-  animation: marquee 28s linear infinite;
-}
-
 @keyframes orbit {
   from { transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg); }
   to { transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg); }
@@ -242,14 +234,6 @@ h1, h2, h3, h4, h5, h6 {
 }
 .animate-twinkle {
   animation: twinkle 2.4s ease-in-out infinite;
-}
-
-@keyframes livePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 71, 58, 0.55); }
-  50% { box-shadow: 0 0 0 6px rgba(229, 71, 58, 0); }
-}
-.animate-live-pulse {
-  animation: livePulse 1.6s ease-out infinite;
 }
 
 /* ============================================================
@@ -393,6 +377,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 400;
   color: rgba(245, 243, 240, 0.85);
   transition: color 0.3s ease, opacity 0.3s ease;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 .nav-link-cinematic:hover {
   color: #22d3ee;
@@ -402,14 +387,63 @@ h1, h2, h3, h4, h5, h6 {
    past the hero (toggled via a `.nav-scrolled` class from JS, not CSS
    alone, since "has the user scrolled" isn't expressible in pure CSS). */
 .nav-cinematic {
-  background: transparent;
-  border-bottom: 1px solid transparent;
+  /* Always transparent with blur - Rolls-Royce style */
+  background: rgba(13, 3, 3, 0.3);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transition: background-color 0.5s ease, border-color 0.5s ease, backdrop-filter 0.5s ease;
 }
 .nav-cinematic.nav-scrolled {
-  background: rgba(13, 3, 3, 0.92);
-  backdrop-filter: blur(10px);
-  border-bottom-color: rgba(170, 5, 5, 0.25);
+  /* Slightly more solid when scrolled, but still transparent */
+  background: rgba(13, 3, 3, 0.5);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================================
+   EVENT DETAIL - sticky sub-nav shrink/darken on scroll
+   ============================================================
+   Same pattern as .nav-cinematic/.nav-scrolled above (a `sub-nav-
+   scrolled` class toggled by a scroll-position check in
+   EventDetail.jsx), applied to the event sub-nav bar (event name +
+   Overview|Rules|Register) instead of the main site nav. Height
+   compresses from 56px -> 44px and the background darkens from a
+   faint gradient to a near-solid dark bar, matching how the
+   Rolls-Royce reference's own model sub-nav subtly solidifies as the
+   hero scrolls out of view - it should never look visually IDENTICAL
+   throughout the scroll, per the brief. */
+.event-subnav {
+  height: 3.5rem; /* 56px, matches the main nav's h-14 */
+  transition: height 0.4s ease, background-color 0.4s ease, backdrop-filter 0.4s ease;
+}
+.event-subnav.sub-nav-scrolled {
+  height: 2.75rem; /* 44px - compressed */
+  background: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(24px);
+}
+@media (prefers-reduced-motion: reduce) {
+  /* State still changes (height/background), just without the
+     animated transition - "remove the motion, not the element/state",
+     matching the app's existing reduced-motion convention. */
+  .event-subnav {
+    transition: none;
+  }
+}
+
+/* Anchor-scroll offset for the Event Detail page's in-page sections
+   (#overview / #rules / #register). Without this, clicking a sub-nav
+   tab scrolls the target section to the very top of the viewport -
+   which sits BEHIND the fixed main nav (56px) + sticky sub-nav (56px
+   default / 44px scrolled) = up to 112px of dead zone, clipping the
+   section's own heading. `scroll-margin-top` tells the browser's
+   native anchor-scroll (triggered by <a href="#id">, combined with the
+   already-global `html { scroll-behavior: smooth }`) to stop 112px
+   short of the true top instead of flush against it - no JS scroll
+   library needed, this is a pure CSS fix for a pure CSS mechanism. */
+#overview,
+#rules,
+#register {
+  scroll-margin-top: 7rem; /* 112px = 56px main nav + 56px sub-nav (worst case, unscrolled) */
 }
 
 /* Understated text-link CTA ("EXPLORE EVENTS" style) instead of a filled
@@ -566,4 +600,123 @@ h1, h2, h3, h4, h5, h6 {
 }
 .animate-core-breathe {
   animation: coreBreathe 4s ease-in-out infinite;
+}
+
+/* The Events page's own local video hero (.events-hero*) was removed in
+   favor of ONE shared video backdrop (CinematicBackground.jsx, mounted
+   once in App.jsx) fixed behind the entire site - see .cinematic-bg-*
+   below. This keeps the treatment identical on every page instead of
+   Login and Events each rendering their own separately-tuned copy. */
+
+/* ============================================================
+   Shared site-wide cinematic video background (CinematicBackground.jsx)
+   Fixed behind literally everything (z-index -10, well below the app's
+   fixed navbar at z-50 and this file's own custom-cursor override).
+   Semi-blurred + dimmed - restrained, Rolls-Royce-style ambient motion
+   behind the content, never a sharp foreground video. Reduced motion
+   skips the <video> (see the component) and this wash's own base color
+   is the fallback, so the page never shows dead black either way.
+   ============================================================ */
+.cinematic-bg {
+  position: fixed;
+  inset: 0;
+  /* Positive (not negative) z-index deliberately - a negative z-index
+     here previously caused this exact bug on the Login page: the
+     background silently vanished behind an ancestor's own painted
+     background because of how stacking contexts resolve negative
+     indices. Positive + low, paired with `.app-shell` below explicitly
+     stacking ABOVE it, is the version that's actually been verified to
+     render correctly. */
+  z-index: 0;
+  overflow: hidden;
+  background: #0d0303; /* = tailwind `void` - fallback base, matches body */
+}
+.cinematic-bg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* The "semi blurred" look: soft, dimmed, slightly desaturated so it
+     reads as ambient texture behind the UI, not a competing clip. */
+  filter: blur(7px) brightness(0.45) saturate(1.05);
+  transform: scale(1.08); /* hides the soft edge the blur introduces */
+}
+.cinematic-bg-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(170, 5, 5, 0.22), transparent 60%),
+    radial-gradient(ellipse at 100% 100%, rgba(34, 211, 238, 0.05), transparent 55%),
+    linear-gradient(180deg, rgba(13, 3, 3, 0.55) 0%, rgba(13, 3, 3, 0.35) 40%, rgba(13, 3, 3, 0.75) 100%);
+}
+@media (max-width: 640px) {
+  .cinematic-bg-video { filter: blur(6px) brightness(0.42) saturate(1.05); }
+}
+
+/* The app's whole content tree (App.jsx's root wrapper) needs its own
+   stacking context ABOVE .cinematic-bg (z 0), otherwise normal in-flow
+   content - which has no z-index of its own - can end up painted UNDER
+   the fixed background depending on paint order.
+   
+   CRITICAL FIX: All text content was hidden because the z-index was too low.
+   Bumping to z-10 ensures content always stays above the background layer. */
+.app-shell {
+  position: relative;
+  z-index: 10;
+  /* Ensure text is always visible with proper color and no transparency issues */
+  color: var(--color-text-primary);
+}
+
+/* Utility class to ensure text is always visible with proper contrast */
+.text-visible {
+  position: relative;
+  z-index: 1;
+  color: var(--color-text-primary);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Fix for headings to ensure they're always visible */
+h1, h2, h3, h4, h5, h6 {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure all paragraph and text elements are visible */
+p, span, div, a, button, label, input, textarea {
+  position: relative;
+  z-index: 1;
+}
+
+/* Sections need proper stacking */
+section {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------------------------------------------------------------------
+   scrollbar-hide utility
+   ---------------------------------------------------------------------
+   Hides the native scrollbar on a horizontally-scrollable element while
+   still allowing scroll (mouse wheel, trackpad, arrow keys, touch drag).
+   Used by the Events landing page's snap-scroll carousel so the row of
+   event cards doesn't render a chunky OS scrollbar underneath it - the
+   left/right arrow buttons and touch drag are the visible affordances.
+
+   Kept as a plain utility rather than a Tailwind plugin (this project
+   deliberately doesn't run `tailwindcss-scrollbar-hide` - no npm plugin
+   install), so it's just a class you add to any element:
+       <div className="overflow-x-auto scrollbar-hide">...</div>
+   --------------------------------------------------------------------- */
+.scrollbar-hide {
+  /* IE / Edge (legacy) */
+  -ms-overflow-style: none;
+  /* Firefox */
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  /* Chrome / Safari / Opera / Edge (Chromium) */
+  display: none;
+  width: 0;
+  height: 0;
 }

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useReducedMotion } from "framer-motion";
 import toast from "react-hot-toast";
-import TechAstraCore from "../components/TechAstraCore";
+import TechAstraLogo from "../components/TechAstraLogo";
 import FullScreenMenu from "../components/FullScreenMenu";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -18,28 +19,27 @@ const PORTAL_PATH = {
 };
 
 /**
- * "The Core" cinematic Login scene - built to an exact, literal build
- * spec (given verbatim by the user) rather than the site's usual
- * component-reuse conventions. Every class name, layout value, and CSS
- * rule lives in the co-located Login.css and is scoped to `.login-page`
- * so nothing here leaks onto any other route.
+ * "The Core" Login scene - a centered glassmorphism sign-in card (modern
+ * 21st.dev-style layout: logo, title, email/password, primary CTA) over
+ * the site's shared cinematic video background.
  *
- * Two deliberate departures from the spec's literal JSX, both because
- * the spec's own placeholders (<CartIcon/>, <MenuHamburger/>) don't
- * exist as real components anywhere in this codebase - using the site's
- * REAL working equivalents instead of inventing new placeholder
- * components that would just be decorative:
- *   - <CartIcon/> -> the exact same cart glyph + badge Navbar.jsx uses,
- *     reading live count from useCart() (not a static icon).
- *   - <MenuHamburger/> -> the site's real FullScreenMenu overlay
- *     (Events / My Dashboard / Help Desk / Verify Certificate), opened
- *     by the same three-line hamburger button, mounted directly on this
- *     page since Login intentionally does not render the global Navbar
- *     (see the App.jsx route-based exception for why).
+ * The video itself is NOT rendered here anymore - it comes from the one
+ * shared <CinematicBackground/> mounted in App.jsx behind the whole app
+ * shell, so Login shows the exact same semi-blurred/dimmed treatment as
+ * every other page instead of its own separately-tuned full-clarity copy.
+ * This page only adds its own vignette on top for extra focal contrast
+ * around the card.
  *
- * The email/password form's behavior (useAuth().login, role-based
- * redirect, toast feedback) is preserved exactly as it worked before
- * this rebuild - only the surrounding visual shell changed.
+ * Adapted to this codebase rather than dropped in verbatim from the
+ * pasted 21st.dev demo: it stays JSX (the app isn't TypeScript), and it
+ * keeps TechAstra's REAL auth - the email/password form calls
+ * useAuth().login and redirects by the SERVER-returned role via
+ * PORTAL_PATH, with toast feedback - instead of the demo component's
+ * non-functional Google/GitHub/Apple social buttons.
+ *
+ * All styling stays scoped under `.login-page` (see Login.css) so nothing
+ * leaks onto other routes; the page still renders outside the global
+ * Navbar/Footer (App.jsx route exception).
  */
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -49,20 +49,18 @@ export default function Login() {
   const { login } = useAuth();
   const { items } = useCart();
   const navigate = useNavigate();
+  const reduce = useReducedMotion();
 
-  // ============================================================
-  // Custom two-ring cursor (spec: "Inner ring snaps to the pointer
-  // instantly ... Outer ring lerps toward the inner ring's position at
-  // rate 0.2 per frame"). Refs used instead of React state for the
-  // per-frame position updates so this doesn't trigger a re-render on
-  // every mousemove/animation frame - only style.transform is mutated
-  // directly, the same pattern VisionCursor.jsx (the app's other custom
-  // cursor) already uses for the same reason.
-  // ============================================================
   const cursorInnerRef = useRef(null);
   const cursorOuterRef = useRef(null);
 
+  // ============================================================
+  // Custom two-ring cursor - inner ring snaps to the pointer instantly,
+  // outer ring lerps toward it at 0.2/frame. Skipped under reduced motion
+  // (the CSS also restores the default cursor then).
+  // ============================================================
   useEffect(() => {
+    if (reduce) return;
     const pos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     const outerPos = { ...pos };
     let frame;
@@ -70,18 +68,12 @@ export default function Login() {
     const onMove = (e) => {
       pos.x = e.clientX;
       pos.y = e.clientY;
-      // Inner ring: snaps instantly, no lerp - set directly here rather
-      // than waiting for the next rAF tick, per "snaps to the pointer
-      // instantly" in the spec.
       if (cursorInnerRef.current) {
         cursorInnerRef.current.style.transform = `translate(${pos.x}px, ${pos.y}px) translate(-50%, -50%)`;
       }
     };
 
     const tick = () => {
-      // Outer ring: lerp factor 0.2 per frame toward the inner ring's
-      // (i.e. the pointer's) position - the exact fixed value from the
-      // spec's "Interaction & animation values" section.
       outerPos.x += (pos.x - outerPos.x) * 0.2;
       outerPos.y += (pos.y - outerPos.y) * 0.2;
       if (cursorOuterRef.current) {
@@ -97,7 +89,7 @@ export default function Login() {
       window.removeEventListener("mousemove", onMove);
       cancelAnimationFrame(frame);
     };
-  }, []);
+  }, [reduce]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -115,49 +107,38 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      <div className="cursor-inner" ref={cursorInnerRef} />
-      <div className="cursor-outer" ref={cursorOuterRef} />
+      {/* ---- Extra focal vignette on top of the shared cinematic
+          background, darkening the edges around the card ---- */}
+      <div className="login-vignette" aria-hidden="true" />
 
+      {/* ---- Two-ring custom cursor ---- */}
+      {!reduce && (
+        <>
+          <div className="cursor-inner" ref={cursorInnerRef} />
+          <div className="cursor-outer" ref={cursorOuterRef} />
+        </>
+      )}
+
+      {/* ---- Sticky brand header ---- */}
       <header className="login-header">
-        <div className="brand">
-          TECHASTRA<span className="brand-year">26</span>
-        </div>
+        <Link to="/events" className="brand" data-log="login-logo">
+          <TechAstraLogo size="sm" />
+        </Link>
         <nav className="header-nav">
           <a href="/events">EVENTS</a>
           <span className="nav-dot" />
           <a href="/verify-certificate">VERIFY CERTIFICATE</a>
         </nav>
         <div className="header-actions">
-          {/* Real cart glyph + live badge count, not a static <CartIcon/> - see the file-level note above. */}
           <Link to="/cart" aria-label="Cart" className="relative" style={{ display: "flex", color: "#ffffff" }}>
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
               <circle cx="9" cy="20" r="1.4" />
               <circle cx="18" cy="20" r="1.4" />
               <path d="M2 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 2-1.6L21 7H6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            {items.length > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: -8,
-                  right: -8,
-                  background: "#EF4444",
-                  color: "#ffffff",
-                  fontSize: 9,
-                  borderRadius: "50%",
-                  width: 16,
-                  height: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {items.length}
-              </span>
-            )}
+            {items.length > 0 && <span className="login-cart-badge">{items.length}</span>}
           </Link>
           <span className="login-label">LOGIN</span>
-          {/* Real hamburger opening the site's FullScreenMenu overlay, not a static <MenuHamburger/> - see the file-level note above. */}
           <button
             onClick={() => setMenuOpen(true)}
             aria-label="Open menu"
@@ -170,35 +151,46 @@ export default function Login() {
         </div>
       </header>
 
-      <div className="login-body">
-        <div className="core-panel">
-          <div className="core-canvas-frame">
-            <TechAstraCore size={480} />
+      {/* ---- Centered glassmorphism sign-in card ---- */}
+      <main className="login-stage">
+        <div className="login-card">
+          <div className="login-card-logo">
+            <TechAstraLogo size="sm" showGlow={false} />
           </div>
-          <p className="core-eyebrow">TECHASTRA &middot; 2026</p>
-          <h2 className="core-tagline">
-            One symposium. Eight
-            <br />
-            tracks. A single
-            <br />
-            unforgettable day.
-          </h2>
-        </div>
+          <h1 className="login-card-title">Sign in to your portal</h1>
+          <p className="login-card-subtitle">
+            Participants can only log in once their registration is approved.
+          </p>
 
-        <div className="form-panel">
-          <p className="form-eyebrow">WELCOME BACK</p>
-          <h1 className="form-title">Login</h1>
-          <p className="form-subtitle">Participants can only log in once their registration is approved.</p>
+          <form onSubmit={handleSubmit} className="login-form">
+            <label htmlFor="login-email" className="login-field-label">
+              EMAIL
+            </label>
+            <input
+              id="login-email"
+              className="login-input"
+              type="email"
+              placeholder="name@example.com"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
 
-          <form onSubmit={handleSubmit} style={{ width: "100%" }}>
-            <label htmlFor="login-email">EMAIL</label>
-            <input id="login-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-
-            <label htmlFor="login-password">PASSWORD</label>
-            <input id="login-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <label htmlFor="login-password" className="login-field-label">
+              PASSWORD
+            </label>
+            <input
+              id="login-password"
+              className="login-input"
+              type="password"
+              placeholder="••••••••"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
 
             <button type="submit" className="login-btn" disabled={loading}>
-              {loading ? "LOGGING IN..." : "LOGIN"}
+              {loading ? "SIGNING IN..." : "SIGN IN"}
             </button>
           </form>
 
@@ -206,7 +198,7 @@ export default function Login() {
             CHECK REGISTRATION STATUS
           </Link>
         </div>
-      </div>
+      </main>
 
       <FullScreenMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </div>

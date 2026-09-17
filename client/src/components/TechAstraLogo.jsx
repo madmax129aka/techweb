@@ -33,7 +33,7 @@ export default function TechAstraLogo({ size = "md", showGlow = true, className 
           />
         )}
         <img
-          src="/logo.png"
+          src="/ChatGPT Image Sep 15, 2026, 02_24_19 PM.png"
           alt="TechAstra '26"
           width={dims.w}
           height={dims.h}

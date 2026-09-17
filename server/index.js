@@ -26,14 +26,39 @@ const logRoutes = require("./routes/logs");
 const app = express();
 const server = http.createServer(app);
 
-const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+// Allowed CORS origins. In production, set CLIENT_ORIGIN to your deployed
+// frontend URL (comma-separated for multiple). In local dev, Vite starts on
+// 5173 but silently falls back to 5174/5175/... when a port is taken, which
+// used to break the API with CORS errors - so all the common local Vite
+// ports are allowed here by default. Any explicit CLIENT_ORIGIN value(s) are
+// added on top.
+const defaultDevOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+  "http://127.0.0.1:5175",
+];
+const envOrigins = (process.env.CLIENT_ORIGIN || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+const allowedOrigins = [...new Set([...defaultDevOrigins, ...envOrigins])];
+
+// A function origin lets requests with no Origin header (curl, same-origin,
+// health checks) through, and reflects any allowed browser origin.
+const corsOrigin = (origin, callback) => {
+  if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+  return callback(new Error(`Origin ${origin} not allowed by CORS`));
+};
 
 const io = new Server(server, {
-  cors: { origin: clientOrigin, methods: ["GET", "POST"] },
+  cors: { origin: corsOrigin, methods: ["GET", "POST"] },
 });
 initSocket(io);
 
-app.use(cors({ origin: clientOrigin }));
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json({ limit: "10mb" }));
 app.use(requestLogger);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

@@ -150,6 +150,14 @@ export default {
         heading: ["Space Grotesk", "sans-serif"],
         serif: ["Playfair Display", "serif"],
         body: ["Inter", "sans-serif"],
+        // Italiana - already loaded site-wide via index.html's Google
+        // Fonts link and already used on Login.jsx (login-card-title,
+        // see Login.css). Added as its own Tailwind token here so the
+        // Event Detail hero headline can use `font-italiana` instead of
+        // a raw inline style - this is the tall, elegant, wide-tracked
+        // display serif the Rolls-Royce Phantom reference page uses for
+        // its centered model name.
+        italiana: ["Italiana", "serif"],
       },
       boxShadow: {
         glow: "0 0 40px rgba(61, 217, 235, 0.15)",

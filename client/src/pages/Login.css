@@ -1,29 +1,54 @@
 /**
- * "The Core" cinematic Login scene - scoped entirely to `.login-page` so
- * none of this leaks onto any other route. Every selector, value, and
- * comment below is transcribed VERBATIM from the exact build spec given
- * for this page - nothing here was invented or "improved" on top of it.
- * The only additions beyond the spec are the two blocks explicitly
- * marked "NOT IN SPEC" below (the spec's own JSX referenced
- * `.header-actions`/`.login-label` without ever giving them CSS, and a
- * `prefers-reduced-motion` override was required by the spec's own
- * "Interaction & animation values" section but wasn't written out as
- * CSS there - both are called out inline rather than silently added).
+ * "The Core" Login scene - a centered glassmorphism sign-in card (modern
+ * 21st.dev-style layout, adapted to TechAstra's real auth + JSX) over the
+ * site's ONE shared cinematic video background (CinematicBackground.jsx,
+ * mounted in App.jsx). This file no longer defines its own video - only
+ * the card, header, cursor, and an extra focal vignette layered on top.
+ *
+ * Everything is scoped under `.login-page` so none of it leaks onto other
+ * routes. The page renders outside the global Navbar/Footer (App.jsx
+ * route exception), but it still sits inside `.app-shell`, so it shares
+ * that wrapper's stacking context above the fixed video background.
  */
 
 .login-page {
     width: 100%;
     min-height: 100vh;
-    background-color: #12080a;      /* near-black with a faint red undertone */
+    /* No background-color here - deliberately transparent so the shared
+       CinematicBackground (fixed, behind .app-shell's content) shows
+       through. Position + z-index are explicit (not left to implicit
+       DOM order) so this page reliably paints above that background. */
+    position: relative;
+    z-index: 1;
     color: #ffffff;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', -apple-system, sans-serif;
     cursor: none;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    position: relative; /* establishes the containing block for ::before's position: fixed background wave below */
+}
+@media (max-width: 720px) {
+    .login-page {
+        overflow-x: hidden;
+        overflow-y: auto;
+        min-height: 100dvh;   /* dvh accounts for mobile browser chrome */
+    }
 }
 .login-page * { cursor: none !important; }
+
+/* ============================================================
+   Extra focal vignette
+   Layered on top of the shared CinematicBackground (which already
+   blurs/dims/scrims the video) to pull extra contrast in toward the
+   center where the card sits - this page's only visual addition beyond
+   what every other route already gets from the shared background.
+   ============================================================ */
+.login-vignette {
+    position: fixed; inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at center, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%);
+}
 
 /* ============================================================
    Custom two-ring cursor
@@ -40,149 +65,151 @@
 .cursor-outer {
     position: fixed; top: 0; left: 0;
     width: 40px; height: 40px;
-    border: 1.5px solid rgba(255, 90, 90, 0.6);   /* tinted red-cyan mix to match theme */
+    border: 1.5px solid rgba(0, 240, 255, 0.55);   /* cyan accent */
     border-radius: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
     z-index: 9998;
     transition: width 0.3s, height 0.3s, border-color 0.3s;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
 }
 
 /* ============================================================
-   Header
+   Sticky brand header
    ============================================================ */
 .login-header {
     position: fixed; top: 0; left: 0; right: 0;
     display: flex; justify-content: space-between; align-items: center;
     padding: 20px 40px;
     z-index: 20;
-    background: linear-gradient(to bottom, rgba(20,4,6,0.85), transparent);
+    background: linear-gradient(to bottom, rgba(4,4,6,0.7), transparent);
 }
-.brand { font-family: 'Italiana', serif; font-size: 20px; letter-spacing: 2px; }
-.brand-year { color: #3DD9EB; margin-left: 2px; }
+@media (max-width: 720px) {
+    .login-header { padding: 16px 20px; }
+    .header-nav { display: none; }   /* keep the header uncluttered on small screens */
+}
+.brand { display: inline-flex; align-items: center; text-decoration: none; }
 .header-nav { display: flex; align-items: center; gap: 24px; }
 .header-nav a {
     color: #ffffff; text-decoration: none;
     font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
 }
 .nav-dot { width: 3px; height: 3px; background: rgba(255,255,255,0.25); border-radius: 50%; }
-
-/* NOT IN SPEC: the spec's header JSX includes a <div className="header-actions">
-   wrapping <CartIcon/>, a "LOGIN" label, and <MenuHamburger/>, but never
-   gives .header-actions or .login-label their own CSS rule - only
-   .login-header/.brand/.header-nav/.nav-dot were specified. Added the
-   minimal layout needed for those three items to sit correctly on the
-   header's right side (flex row, matching gap to .header-nav, and the
-   label styled identically to the nav links since no distinct style was
-   given for it) rather than leaving them unstyled/stacked. */
 .header-actions { display: flex; align-items: center; gap: 24px; }
 .login-label {
     color: #ffffff;
     font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
 }
+.login-cart-badge {
+    position: absolute; top: -8px; right: -8px;
+    background: #EF4444; color: #ffffff;
+    font-size: 9px; border-radius: 50%;
+    width: 16px; height: 16px;
+    display: flex; align-items: center; justify-content: center;
+}
 
 /* ============================================================
-   Split body
+   Centered stage + glassmorphism card
    ============================================================ */
-.login-body {
+.login-stage {
+    position: relative;
+    z-index: 2;
     flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding-top: 90px;
-}
-@media (max-width: 900px) {
-    .login-body { grid-template-columns: 1fr; }
-}
-
-/* ============================================================
-   Left panel - the 3D Core viewport + caption
-   ============================================================ */
-.core-panel {
-    display: flex; flex-direction: column;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    padding: 40px 60px;
+    padding: 96px 20px 40px;   /* top padding clears the fixed header */
 }
-.core-canvas-frame {
+.login-card {
     width: 100%;
-    max-width: 480px;
-    aspect-ratio: 1 / 1;
-    background: rgba(0,0,0,0.35);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 28px;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 40px 36px;
+    border-radius: 16px;
+    background: rgba(12, 14, 20, 0.55);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
-.core-eyebrow {
-    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
-    color: #3DD9EB; margin-bottom: 12px;
+@media (max-width: 480px) {
+    .login-card { padding: 32px 22px; }
 }
-.core-tagline {
+.login-card-logo { margin-bottom: 18px; }
+.login-card-title {
     font-family: 'Italiana', serif;
-    font-size: 34px; line-height: 1.25; font-weight: 400;
-    color: #fff6ed; max-width: 480px;
+    font-size: 30px;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+}
+.login-card-subtitle {
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 26px;
+    max-width: 300px;
 }
 
-/* ============================================================
-   Right panel - login form
-   ============================================================ */
-.form-panel {
-    display: flex; flex-direction: column;
-    justify-content: center; align-items: flex-start;
-    padding: 40px 80px;
+.login-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
 }
-.form-eyebrow { color: #3DD9EB; font-size: 11px; letter-spacing: 3px; margin-bottom: 8px; }
-.form-title { font-family: 'Italiana', serif; font-size: 42px; margin-bottom: 12px; }
-.form-subtitle { color: #b8a9a9; font-size: 14px; margin-bottom: 32px; max-width: 420px; }
-.form-panel label {
-    font-size: 11px; letter-spacing: 1.5px; color: #b8a9a9; margin-bottom: 8px; display: block;
+.login-field-label {
+    font-size: 11px; letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.55);
+    margin-bottom: 8px;
 }
-.form-panel input {
-    width: 100%; max-width: 420px;
-    background: #1a0d0f; border: 1px solid rgba(255,255,255,0.15);
-    color: #ffffff; padding: 14px 16px; margin-bottom: 24px;
-    border-radius: 4px; font-size: 14px;
-    transition: border-color 0.3s;
+.login-input {
+    width: 100%;
+    background: rgba(5, 6, 8, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    padding: 13px 15px;
+    margin-bottom: 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.25s, box-shadow 0.25s;
 }
-.form-panel input:focus { outline: none; border-color: #3DD9EB; }
+.login-input::placeholder { color: rgba(255, 255, 255, 0.3); }
+.login-input:focus {
+    outline: none;
+    border-color: #00F0FF;
+    box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.14);
+}
+
 .login-btn {
-    width: 100%; max-width: 420px;
+    width: 100%;
+    margin-top: 4px;
     background: linear-gradient(135deg, #EF4444, #7A1620);
-    color: #ffffff; border: none; padding: 16px;
+    color: #ffffff; border: none;
+    padding: 14px;
     font-size: 13px; letter-spacing: 2px; font-weight: 600;
-    border-radius: 4px; cursor: pointer;
-    box-shadow: 0 0 24px rgba(239,68,68,0.35);
-    transition: transform 0.25s, box-shadow 0.25s;
+    border-radius: 8px; cursor: pointer;
+    box-shadow: 0 0 24px rgba(239, 68, 68, 0.35);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
-.login-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 32px rgba(239,68,68,0.5); }
+.login-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 32px rgba(239, 68, 68, 0.5); }
 .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
 .status-link {
-    margin-top: 20px; font-size: 11px; letter-spacing: 1.5px;
-    color: #b8a9a9; text-decoration: underline; text-underline-offset: 4px;
+    display: inline-block;
+    margin-top: 22px;
+    font-size: 11px; letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.55);
+    text-decoration: underline; text-underline-offset: 4px;
 }
+.status-link:hover { color: #ffffff; }
 
-/* ============================================================
-   Background wave (behind the whole login page, CSS-only)
-   ============================================================ */
-.login-page::before {
-    content: '';
-    position: fixed; inset: 0; z-index: -1;
-    background:
-        radial-gradient(ellipse at 20% 30%, rgba(239,68,68,0.12), transparent 60%),
-        radial-gradient(ellipse at 80% 70%, rgba(61,217,235,0.06), transparent 60%),
-        #12080a;
-    animation: bgBreathe 14s ease-in-out infinite alternate;
-}
-@keyframes bgBreathe {
-    from { filter: brightness(1); }
-    to   { filter: brightness(1.15); }
-}
-
-/* NOT IN SPEC (but required by the spec's own "Interaction & animation
-   values" section: "On prefers-reduced-motion ... disable the CSS
-   bgBreathe animation" - the rule doing that just wasn't written out).
-   `animation: none` on the pseudo-element stops the brightness cycle
-   entirely, leaving a static wash at its base brightness. */
+/* Reduced motion: the video isn't rendered (handled in JSX), and the
+   custom cursor is skipped - restore the normal pointer so the page is
+   still fully usable. */
 @media (prefers-reduced-motion: reduce) {
-    .login-page::before {
-        animation: none;
-    }
+    .login-page,
+    .login-page * { cursor: auto !important; }
 }

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import toast from "react-hot-toast";
 import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
 import { Label, Input } from "../components/ui/Input";
 import { api } from "../lib/api";
+import { fadeUp, staggerContainer, EASE_CINEMATIC } from "../lib/motion";
 
 /**
  * Minimal, borderless cinematic layout replacing the old boxed-Card
@@ -17,6 +19,7 @@ export default function Status() {
   const [email, setEmail] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const reduce = useReducedMotion();
 
   const check = async (e) => {
     e?.preventDefault();
@@ -41,45 +44,71 @@ export default function Status() {
 
   return (
     <div className="max-w-md mx-auto px-6 py-20">
-      <div className="text-center mb-12 animate-cinematic-fade">
+      <motion.div
+        className="text-center mb-12"
+        initial={reduce ? false : { opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: EASE_CINEMATIC }}
+      >
         <p className="text-arc text-[11px] tracking-cinematic uppercase mb-4">My Dashboard</p>
         <h1 className="font-serif text-3xl sm:text-4xl text-offwhite">Check Registration Status</h1>
-      </div>
+      </motion.div>
 
-      <form onSubmit={check} className="space-y-5">
-        <div>
+      {/* Form fields cascade in with a light stagger */}
+      <motion.form
+        onSubmit={check}
+        className="space-y-5"
+        variants={staggerContainer}
+        initial={reduce ? false : "hidden"}
+        animate="show"
+      >
+        <motion.div variants={fadeUp}>
           <Label htmlFor="code">Registration Code</Label>
           <Input id="code" placeholder="SYM2026-0042" value={code} onChange={(e) => setCode(e.target.value)} />
-        </div>
-        <p className="text-center text-offwhite/30 text-[11px] uppercase tracking-wider">&mdash; or &mdash;</p>
-        <div>
+        </motion.div>
+        <motion.p variants={fadeUp} className="text-center text-offwhite/30 text-[11px] uppercase tracking-wider">
+          &mdash; or &mdash;
+        </motion.p>
+        <motion.div variants={fadeUp}>
           <Label htmlFor="email">Email</Label>
           <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </div>
-        <Button type="submit" size="lg" className="w-full" disabled={loading}>
-          {loading ? "Checking..." : "Check Status"}
-        </Button>
-      </form>
+        </motion.div>
+        <motion.div variants={fadeUp}>
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            {loading ? "Checking..." : "Check Status"}
+          </Button>
+        </motion.div>
+      </motion.form>
 
-      {result && (
-        <div className="mt-12 pt-8 border-t border-crimson/15 animate-cinematic-fade">
-          <div className="flex items-center justify-between mb-4">
-            <span className="font-heading text-lg text-offwhite">{result.registrationCode}</span>
-            <Badge status={result.status}>{result.status}</Badge>
-          </div>
-          <p className="text-sm text-offwhite/50">Total Amount: &#8377;{result.totalAmount}</p>
-          {result.status === "rejected" && result.rejectionReason && (
-            <p className="text-sm text-danger mt-3">Reason: {result.rejectionReason}</p>
-          )}
-          {result.status === "approved" && (
-            <div className="mt-6">
-              <Link to="/login">
-                <Button className="w-full">Log In Now</Button>
-              </Link>
+      {/* Result reveals/dismisses smoothly as it arrives or is replaced */}
+      <AnimatePresence mode="wait">
+        {result && (
+          <motion.div
+            key={result.registrationCode}
+            className="mt-12 pt-8 border-t border-crimson/15"
+            initial={reduce ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduce ? undefined : { opacity: 0, y: -8 }}
+            transition={{ duration: 0.45, ease: EASE_CINEMATIC }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-heading text-lg text-offwhite">{result.registrationCode}</span>
+              <Badge status={result.status}>{result.status}</Badge>
             </div>
-          )}
-        </div>
-      )}
+            <p className="text-sm text-offwhite/50">Total Amount: &#8377;{result.totalAmount}</p>
+            {result.status === "rejected" && result.rejectionReason && (
+              <p className="text-sm text-danger mt-3">Reason: {result.rejectionReason}</p>
+            )}
+            {result.status === "approved" && (
+              <div className="mt-6">
+                <Link to="/login">
+                  <Button className="w-full">Log In Now</Button>
+                </Link>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

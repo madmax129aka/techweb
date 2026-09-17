@@ -2,8 +2,10 @@
  * Seed script for TechAstra Symposium Portal.
  *
  * Populates:
- *  - 8 demo events across tracks (placeholders - swap out once the real
- *    event list/timings/fees are finalized)
+ *  - 15 FINAL events across two tracks - 8 Technical + 7 Non-Technical,
+ *    per the finalized official event list (this is NOT placeholder
+ *    data anymore; the earlier 8-event "Coding Marathon / Hackathon /
+ *    Tech Quiz / ..." set was the placeholder, replaced wholesale here)
  *  - 4 sample colleges (used indirectly via registration collegeName)
  *  - one login per staff role (+ one coordinator per event)
  *  - ~14 dummy registrations spread across pending/approved/rejected
@@ -28,7 +30,11 @@ const COLLEGES = [
   "PSG College of Technology",
 ];
 
-// Demo events - PLACEHOLDER DATA. Replace once the real event list is finalized.
+// FINAL event list (8 Technical + 7 Non-Technical). Sample times, fees,
+// seat counts, venues, and rulebook text below are still illustrative
+// placeholders for THOSE specific details - swap in the real schedule/
+// fee/venue numbers once finalized - but the event NAMES, tracks, and
+// category split are final.
 function buildDemoEvents() {
   const day = (h, m = 0) => {
     const d = new Date();
@@ -38,27 +44,15 @@ function buildDemoEvents() {
   };
 
   return [
+    // ---------------------------------------------------------------
+    // TECHNICAL EVENTS (8)
+    // ---------------------------------------------------------------
     {
-      name: "Coding Marathon",
-      description: "A 3-hour competitive programming sprint across increasing difficulty tiers.",
-      track: "Technical",
+      name: "Pen Your Vision",
+      description: "Pitch your boldest technical idea or research concept as a written paper and a stand-up pitch to a panel of judges.",
+      track: "Paper Presentation",
       category: "technical",
       startTime: day(9, 0),
-      endTime: day(12, 0),
-      fee: 150,
-      maxSeats: 80,
-      isTeamEvent: false,
-      minTeamSize: 1,
-      maxTeamSize: 1,
-      venue: "Computer Lab 1",
-      rulebook: "Individual event. Bring your own laptop. Languages allowed: C, C++, Java, Python. No internet access during the contest except the judge portal.",
-    },
-    {
-      name: "Paper Presentation",
-      description: "Present your research/technical paper to a panel of judges.",
-      track: "Technical",
-      category: "technical",
-      startTime: day(9, 15),
       endTime: day(11, 0),
       fee: 100,
       maxSeats: 40,
@@ -66,12 +60,12 @@ function buildDemoEvents() {
       minTeamSize: 1,
       maxTeamSize: 1,
       venue: "Seminar Hall A",
-      rulebook: "8 minutes presentation + 2 minutes Q&A. Submit slides 1 day prior via the help desk email.",
+      rulebook: "Individual event. Submit a 2-page abstract one day prior via the help desk email. 8 minutes pitch + 2 minutes Q&A on stage.",
     },
     {
-      name: "Hackathon",
-      description: "Build a working prototype for the given problem statement in one day.",
-      track: "Technical",
+      name: "Hack Nexus",
+      description: "A high-intensity hackathon where teams build a working prototype for a surprise problem statement in a single day.",
+      track: "Hackathon",
       category: "technical",
       startTime: day(9, 0),
       endTime: day(17, 0),
@@ -81,42 +75,57 @@ function buildDemoEvents() {
       minTeamSize: 2,
       maxTeamSize: 4,
       venue: "Main Auditorium",
-      rulebook: "Teams of 2-4. Problem statements released at 9 AM sharp. Final demo at 4:30 PM.",
+      rulebook: "Teams of 2-4. Problem statements released at 9 AM sharp. Final demo at 4:30 PM. Any tech stack allowed.",
     },
     {
-      name: "Tech Quiz",
-      description: "General tech, CS fundamentals, and current-affairs quiz.",
-      track: "Technical",
-      category: "non_technical",
+      name: "Crypt Clash",
+      description: "Crack ciphers, puzzles, and cryptographic challenges head-to-head in a fast elimination format.",
+      track: "Cybersecurity",
+      category: "technical",
+      startTime: day(10, 0),
+      endTime: day(12, 0),
+      fee: 120,
+      maxSeats: 50,
+      isTeamEvent: true,
+      minTeamSize: 1,
+      maxTeamSize: 2,
+      venue: "Computer Lab 1",
+      rulebook: "Teams of 1-2. Multiple rounds of increasing difficulty; fastest correct submissions advance to the next round.",
+    },
+    {
+      name: "Trial of Truth",
+      description: "A rapid-fire technical quiz that puts your knowledge on trial - answer fast and accurately to survive each round.",
+      track: "Technical Quiz",
+      category: "technical",
       startTime: day(10, 15),
-      endTime: day(11, 0),
+      endTime: day(12, 0),
       fee: 50,
       maxSeats: 100,
       isTeamEvent: true,
       minTeamSize: 2,
       maxTeamSize: 2,
       venue: "Seminar Hall B",
-      rulebook: "Teams of 2. Prelims (written) followed by finals (on-stage) for the top 6 teams.",
+      rulebook: "Teams of 2. Written prelims followed by an on-stage final for the top 6 teams.",
     },
     {
-      name: "Robo Race",
-      description: "Build and race a line-following/obstacle bot through the arena.",
-      track: "Robotics",
+      name: "Code Rescue",
+      description: "Debug broken, misbehaving code under time pressure and rescue it before the clock runs out.",
+      track: "Debugging",
       category: "technical",
-      startTime: day(11, 0),
-      endTime: day(13, 0),
-      fee: 250,
-      maxSeats: 30,
-      isTeamEvent: true,
+      startTime: day(13, 0),
+      endTime: day(15, 0),
+      fee: 100,
+      maxSeats: 60,
+      isTeamEvent: false,
       minTeamSize: 1,
-      maxTeamSize: 3,
-      venue: "Robotics Arena",
-      rulebook: "Bots must fit within 25x25x25 cm at start. Two attempts per team, best time counts.",
+      maxTeamSize: 1,
+      venue: "Computer Lab 2",
+      rulebook: "Individual event. Bring your own laptop. Languages allowed: C, C++, Java, Python. Bugs are scored by difficulty.",
     },
     {
-      name: "Web Design Contest",
-      description: "Design and build a responsive webpage from a surprise theme, live.",
-      track: "Design",
+      name: "Pixel Protocol",
+      description: "Design and build a pixel-perfect responsive webpage or interface from a surprise theme, live.",
+      track: "Web/UI Design",
       category: "technical",
       startTime: day(13, 0),
       endTime: day(15, 0),
@@ -125,45 +134,92 @@ function buildDemoEvents() {
       isTeamEvent: false,
       minTeamSize: 1,
       maxTeamSize: 1,
-      venue: "Computer Lab 2",
+      venue: "Computer Lab 3",
       rulebook: "Individual event. Theme revealed at start. HTML/CSS/JS only, no frameworks.",
     },
     {
-      name: "Poster Presentation",
-      description: "Visually communicate a technical concept or project via a poster.",
-      track: "Technical",
+      name: "Forensic Alibi",
+      description: "Analyze digital evidence, decode clues, and piece together the truth behind a simulated cybercrime scene.",
+      track: "Digital Forensics",
       category: "technical",
       startTime: day(9, 30),
       endTime: day(11, 30),
-      fee: 80,
-      maxSeats: 45,
+      fee: 150,
+      maxSeats: 40,
+      isTeamEvent: true,
+      minTeamSize: 2,
+      maxTeamSize: 3,
+      venue: "Cyber Lab",
+      rulebook: "Teams of 2-3. Analyze provided logs and files to identify the culprit; submit your case report before time runs out.",
+    },
+    {
+      name: "Prompt Arena",
+      description: "Craft the sharpest AI prompts to solve given challenges - precision and creativity decide the winner.",
+      track: "Artificial Intelligence",
+      category: "technical",
+      startTime: day(15, 0),
+      endTime: day(17, 0),
+      fee: 100,
+      maxSeats: 50,
       isTeamEvent: false,
       minTeamSize: 1,
       maxTeamSize: 1,
-      venue: "Exhibition Hall",
-      rulebook: "A1 size poster, printed and brought by the participant. Judging is continuous through the session.",
+      venue: "Computer Lab 4",
+      rulebook: "Individual event. Given a target output, write the best-performing prompt within the time and token limits provided.",
     },
+
+    // ---------------------------------------------------------------
+    // NON-TECHNICAL EVENTS (7)
+    // ---------------------------------------------------------------
     {
-      name: "Startup Pitch",
-      description: "Pitch a business/startup idea to a panel of judges, shark-tank style.",
-      track: "Entrepreneurship",
+      name: "Rythm Riot",
+      description: "A high-energy dance battle where solo performers or crews bring their best moves to the stage.",
+      track: "Dance",
       category: "non_technical",
       startTime: day(14, 0),
       endTime: day(16, 0),
-      fee: 200,
-      maxSeats: 25,
+      fee: 80,
+      maxSeats: 60,
       isTeamEvent: true,
       minTeamSize: 1,
-      maxTeamSize: 4,
-      venue: "Seminar Hall A",
-      rulebook: "5 minute pitch + 3 minutes Q&A. Slide deck of max 10 slides.",
+      maxTeamSize: 8,
+      venue: "Open Air Theatre",
+      rulebook: "Solo or group (up to 8). 3-5 minutes per performance. Own music track required (submit in advance).",
     },
-    // Extra non-technical events so the Non-Technical branch of the
-    // mega-menu / Events filter is populated with more than one item.
     {
-      name: "Treasure Hunt",
+      name: "70MM Decode",
+      description: "A movie-lovers' quiz spanning dialogues, scenes, and trivia across cinema - decode the clues before your rivals do.",
+      track: "Cinema Quiz",
+      category: "non_technical",
+      startTime: day(11, 0),
+      endTime: day(12, 30),
+      fee: 50,
+      maxSeats: 100,
+      isTeamEvent: true,
+      minTeamSize: 2,
+      maxTeamSize: 4,
+      venue: "Seminar Hall C",
+      rulebook: "Teams of 2-4. Rounds include dialogue identification, scene guessing, and rapid-fire cinema trivia.",
+    },
+    {
+      name: "Verbal Combat",
+      description: "A sharp-tongued debate showdown where words are your only weapon - argue, counter, and win the room.",
+      track: "Debate",
+      category: "non_technical",
+      startTime: day(10, 0),
+      endTime: day(12, 0),
+      fee: 80,
+      maxSeats: 40,
+      isTeamEvent: true,
+      minTeamSize: 1,
+      maxTeamSize: 2,
+      venue: "Debate Hall",
+      rulebook: "Solo or pairs. Topics announced 10 minutes before each round. 3 minutes per speaker, judged on argument and delivery.",
+    },
+    {
+      name: "Blitz Hunt",
       description: "A campus-wide clue-solving chase against the clock, in teams.",
-      track: "General",
+      track: "Treasure Hunt",
       category: "non_technical",
       startTime: day(11, 0),
       endTime: day(13, 0),
@@ -176,34 +232,49 @@ function buildDemoEvents() {
       rulebook: "Teams of 3-5. Clues are physical and digital. First team to the final location wins; no vehicles allowed.",
     },
     {
-      name: "Gaming Tournament",
-      description: "Competitive multiplayer gaming brackets across popular titles.",
-      track: "General",
+      name: "Plot Twist",
+      description: "Build a story live with your team - then survive the surprise twist announced mid-event.",
+      track: "Storytelling",
       category: "non_technical",
       startTime: day(13, 30),
-      endTime: day(16, 30),
-      fee: 100,
-      maxSeats: 64,
-      isTeamEvent: false,
-      minTeamSize: 1,
-      maxTeamSize: 1,
-      venue: "Gaming Zone",
-      rulebook: "Single-elimination brackets. Bring your own peripherals if you prefer; rigs are provided.",
+      endTime: day(15, 30),
+      fee: 90,
+      maxSeats: 50,
+      isTeamEvent: true,
+      minTeamSize: 2,
+      maxTeamSize: 5,
+      venue: "Drama Studio",
+      rulebook: "Teams of 2-5. A base scenario is given; a plot twist is revealed halfway through and must be woven into the finale.",
     },
     {
-      name: "Photography Contest",
-      description: "Capture the theme of the day - best shots judged live on the big screen.",
-      track: "General",
+      name: "Team Fued",
+      description: "A head-to-head team quiz show, game-show style - buzz in first, answer sharp, out-survey the other team.",
+      track: "Team Quiz",
+      category: "non_technical",
+      startTime: day(13, 0),
+      endTime: day(14, 30),
+      fee: 70,
+      maxSeats: 60,
+      isTeamEvent: true,
+      minTeamSize: 4,
+      maxTeamSize: 6,
+      venue: "Seminar Hall D",
+      rulebook: "Teams of 4-6. Survey-style questions; fastest correct buzz-in scores for the team. Bracket-style knockout rounds.",
+    },
+    {
+      name: "Cap Chaos",
+      description: "Caption the chaos - submit the funniest, sharpest caption for each surprise image within the time limit.",
+      track: "Meme/Caption Contest",
       category: "non_technical",
       startTime: day(9, 0),
       endTime: day(15, 0),
-      fee: 70,
-      maxSeats: 50,
+      fee: 40,
+      maxSeats: 100,
       isTeamEvent: false,
       minTeamSize: 1,
       maxTeamSize: 1,
-      venue: "Exhibition Hall",
-      rulebook: "Theme announced at 9 AM. Submit up to 3 shots by 2 PM. Minimal editing allowed (crop/exposure only).",
+      venue: "Media Lab",
+      rulebook: "Individual event. New image revealed every round; submit your caption within 60 seconds. Audience + judges vote.",
     },
   ];
 }
@@ -281,7 +352,10 @@ async function main() {
     events.push(event);
     console.log(`Created event: ${event.name}`);
   }
-  const [coding, paper, hackathon, quiz, robo, webdesign, poster, pitch] = events;
+  const [
+    penVision, hackNexus, cryptClash, trialOfTruth, codeRescue, pixelProtocol, forensicAlibi, promptArena,
+    rythmRiot, decode70mm, verbalCombat, blitzHunt, plotTwist, teamFued, capChaos,
+  ] = events;
 
   // 2. Staff accounts
   const masterAdmin = await upsertStaff({ name: "Dr. HOD Admin", email: "admin@techastra.dev", role: "master_admin" });
@@ -317,23 +391,23 @@ async function main() {
   let idx = 1;
 
   const approvedSeed = [
-    { name: "Arun Kumar", email: "arun.kumar@example.com", college: COLLEGES[0], registerNo: "21CS001", eventIds: [coding.id, quiz.id] },
-    { name: "Divya Sree", email: "divya.sree@example.com", college: COLLEGES[1], registerNo: "21IT014", eventIds: [paper.id] },
-    { name: "Karthik Raja", email: "karthik.raja@example.com", college: COLLEGES[2], registerNo: "20EC022", eventIds: [webdesign.id] },
+    { name: "Arun Kumar", email: "arun.kumar@example.com", college: COLLEGES[0], registerNo: "21CS001", eventIds: [codeRescue.id, trialOfTruth.id] },
+    { name: "Divya Sree", email: "divya.sree@example.com", college: COLLEGES[1], registerNo: "21IT014", eventIds: [penVision.id] },
+    { name: "Karthik Raja", email: "karthik.raja@example.com", college: COLLEGES[2], registerNo: "20EC022", eventIds: [pixelProtocol.id] },
     {
       name: "Meena Priya", email: "meena.priya@example.com", college: COLLEGES[0], registerNo: "21CS045",
-      eventIds: [hackathon.id], teamName: "Byte Busters",
+      eventIds: [hackNexus.id], teamName: "Byte Busters",
       teamMembers: [
         { name: "Meena Priya", regNo: "21CS045", role: "lead" },
         { name: "Suresh Babu", regNo: "21CS046", role: "member" },
         { name: "Priyanka R", regNo: "21CS047", role: "member" },
       ],
     },
-    { name: "Vignesh S", email: "vignesh.s@example.com", college: COLLEGES[3], registerNo: "21ME011", eventIds: [robo.id] },
-    { name: "Lakshmi Narayanan", email: "lakshmi.n@example.com", college: COLLEGES[1], registerNo: "21CS078", eventIds: [poster.id] },
+    { name: "Vignesh S", email: "vignesh.s@example.com", college: COLLEGES[3], registerNo: "21ME011", eventIds: [cryptClash.id] },
+    { name: "Lakshmi Narayanan", email: "lakshmi.n@example.com", college: COLLEGES[1], registerNo: "21CS078", eventIds: [promptArena.id] },
     {
       name: "Ramya Devi", email: "ramya.devi@example.com", college: COLLEGES[2], registerNo: "21AI009",
-      eventIds: [pitch.id], teamName: "NextGen Founders",
+      eventIds: [plotTwist.id], teamName: "NextGen Founders",
       teamMembers: [
         { name: "Ramya Devi", regNo: "21AI009", role: "lead" },
         { name: "Ashok Kumar", regNo: "21AI010", role: "member" },
@@ -350,10 +424,10 @@ async function main() {
   }
 
   const pendingSeed = [
-    { name: "Bala Subramanian", email: "bala.s@example.com", college: COLLEGES[0], registerNo: "21CS002", eventIds: [coding.id] },
-    { name: "Nithya Shree", email: "nithya.shree@example.com", college: COLLEGES[3], registerNo: "21IT033", eventIds: [webdesign.id] },
-    { name: "Prakash Raj", email: "prakash.raj@example.com", college: COLLEGES[1], registerNo: "20EC055", eventIds: [quiz.id, poster.id] },
-    { name: "Anitha Kumari", email: "anitha.k@example.com", college: COLLEGES[2], registerNo: "21CS091", eventIds: [paper.id] },
+    { name: "Bala Subramanian", email: "bala.s@example.com", college: COLLEGES[0], registerNo: "21CS002", eventIds: [codeRescue.id] },
+    { name: "Nithya Shree", email: "nithya.shree@example.com", college: COLLEGES[3], registerNo: "21IT033", eventIds: [pixelProtocol.id] },
+    { name: "Prakash Raj", email: "prakash.raj@example.com", college: COLLEGES[1], registerNo: "20EC055", eventIds: [trialOfTruth.id, promptArena.id] },
+    { name: "Anitha Kumari", email: "anitha.k@example.com", college: COLLEGES[2], registerNo: "21CS091", eventIds: [penVision.id] },
   ];
   for (const p of pendingSeed) {
     const { registration } = await createParticipantWithRegistration({
@@ -364,9 +438,9 @@ async function main() {
   }
 
   const rejectedSeed = [
-    { name: "Gokul Nathan", email: "gokul.nathan@example.com", college: COLLEGES[0], registerNo: "21CS013", eventIds: [coding.id], reason: "Transaction ID could not be matched to any payment" },
-    { name: "Swathi M", email: "swathi.m@example.com", college: COLLEGES[3], registerNo: "21ME028", eventIds: [robo.id], reason: "Duplicate registration for the same event" },
-    { name: "Harish Chandra", email: "harish.c@example.com", college: COLLEGES[1], registerNo: "21IT061", eventIds: [webdesign.id], reason: "Payment amount did not match event fee" },
+    { name: "Gokul Nathan", email: "gokul.nathan@example.com", college: COLLEGES[0], registerNo: "21CS013", eventIds: [codeRescue.id], reason: "Transaction ID could not be matched to any payment" },
+    { name: "Swathi M", email: "swathi.m@example.com", college: COLLEGES[3], registerNo: "21ME028", eventIds: [cryptClash.id], reason: "Duplicate registration for the same event" },
+    { name: "Harish Chandra", email: "harish.c@example.com", college: COLLEGES[1], registerNo: "21IT061", eventIds: [pixelProtocol.id], reason: "Payment amount did not match event fee" },
   ];
   for (const p of rejectedSeed) {
     const { registration } = await createParticipantWithRegistration({
@@ -379,67 +453,67 @@ async function main() {
 
   console.log(`\nCreated ${registrations.length} sample registrations (7 approved, 4 pending, 3 rejected).`);
 
-  // 4. Sample locked results (for Coding Marathon and Hackathon) + certificates
-  const codingApproved = registrations.find((r) => r.eventIds.includes(coding.id) && r.status === "approved");
-  const hackathonApproved = registrations.find((r) => r.eventIds.includes(hackathon.id) && r.status === "approved");
+  // 4. Sample locked results (for Code Rescue and Hack Nexus) + certificates
+  const codeRescueApproved = registrations.find((r) => r.eventIds.includes(codeRescue.id) && r.status === "approved");
+  const hackNexusApproved = registrations.find((r) => r.eventIds.includes(hackNexus.id) && r.status === "approved");
 
-  if (codingApproved) {
+  if (codeRescueApproved) {
     await prisma.result.create({
-      data: { eventId: coding.id, position: 1, registrationId: codingApproved.id, lockedBy: coordinators[0].id },
+      data: { eventId: codeRescue.id, position: 1, registrationId: codeRescueApproved.id, lockedBy: coordinators[4].id },
     });
-    console.log(`Locked result: ${codingApproved.registrationCode} placed 1st in Coding Marathon`);
+    console.log(`Locked result: ${codeRescueApproved.registrationCode} placed 1st in Code Rescue`);
 
-    const certUser = await prisma.user.findUnique({ where: { id: codingApproved.userId } });
+    const certUser = await prisma.user.findUnique({ where: { id: codeRescueApproved.userId } });
     const code1 = `CERT${new Date().getFullYear()}-000001`;
     const pdfUrl1 = await generateCertificatePdf({
       certificateCode: code1,
       participantName: certUser.name,
-      eventName: coding.name,
+      eventName: codeRescue.name,
       type: "winner",
       position: 1,
-      collegeName: codingApproved.collegeName,
+      collegeName: codeRescueApproved.collegeName,
     });
     await prisma.certificate.create({
-      data: { certificateCode: code1, registrationId: codingApproved.id, eventId: coding.id, type: "winner", pdfUrl: pdfUrl1 },
+      data: { certificateCode: code1, registrationId: codeRescueApproved.id, eventId: codeRescue.id, type: "winner", pdfUrl: pdfUrl1 },
     });
     console.log(`Generated demo winner certificate: ${code1}`);
   }
 
-  if (hackathonApproved) {
+  if (hackNexusApproved) {
     await prisma.result.create({
-      data: { eventId: hackathon.id, position: 1, registrationId: hackathonApproved.id, lockedBy: coordinators[2].id },
+      data: { eventId: hackNexus.id, position: 1, registrationId: hackNexusApproved.id, lockedBy: coordinators[1].id },
     });
-    console.log(`Locked result: ${hackathonApproved.registrationCode} placed 1st in Hackathon`);
+    console.log(`Locked result: ${hackNexusApproved.registrationCode} placed 1st in Hack Nexus`);
 
-    const certUser = await prisma.user.findUnique({ where: { id: hackathonApproved.userId } });
+    const certUser = await prisma.user.findUnique({ where: { id: hackNexusApproved.userId } });
     const code2 = `CERT${new Date().getFullYear()}-000002`;
     const pdfUrl2 = await generateCertificatePdf({
       certificateCode: code2,
-      participantName: `${certUser.name} (${hackathonApproved.teamName})`,
-      eventName: hackathon.name,
+      participantName: `${certUser.name} (${hackNexusApproved.teamName})`,
+      eventName: hackNexus.name,
       type: "winner",
       position: 1,
-      collegeName: hackathonApproved.collegeName,
+      collegeName: hackNexusApproved.collegeName,
     });
     await prisma.certificate.create({
-      data: { certificateCode: code2, registrationId: hackathonApproved.id, eventId: hackathon.id, type: "winner", pdfUrl: pdfUrl2 },
+      data: { certificateCode: code2, registrationId: hackNexusApproved.id, eventId: hackNexus.id, type: "winner", pdfUrl: pdfUrl2 },
     });
     console.log(`Generated demo winner certificate: ${code2}`);
 
     // Also generate a plain participation certificate for a different approved reg
-    const paperApproved = registrations.find((r) => r.eventIds.includes(paper.id) && r.status === "approved");
-    if (paperApproved) {
-      const puser = await prisma.user.findUnique({ where: { id: paperApproved.userId } });
+    const penVisionApproved = registrations.find((r) => r.eventIds.includes(penVision.id) && r.status === "approved");
+    if (penVisionApproved) {
+      const puser = await prisma.user.findUnique({ where: { id: penVisionApproved.userId } });
       const code3 = `CERT${new Date().getFullYear()}-000003`;
       const pdfUrl3 = await generateCertificatePdf({
         certificateCode: code3,
         participantName: puser.name,
-        eventName: paper.name,
+        eventName: penVision.name,
         type: "participation",
-        collegeName: paperApproved.collegeName,
+        collegeName: penVisionApproved.collegeName,
       });
       await prisma.certificate.create({
-        data: { certificateCode: code3, registrationId: paperApproved.id, eventId: paper.id, type: "participation", pdfUrl: pdfUrl3 },
+        data: { certificateCode: code3, registrationId: penVisionApproved.id, eventId: penVision.id, type: "participation", pdfUrl: pdfUrl3 },
       });
       console.log(`Generated demo participation certificate: ${code3}`);
     }
@@ -450,7 +524,7 @@ async function main() {
     data: { message: "Welcome to TechAstra 2026! Registration desks open at 8:00 AM.", createdBy: masterAdmin.id },
   });
   await prisma.announcement.create({
-    data: { message: "Venue change: Robo Race has moved to the Robotics Arena (Block C).", createdBy: masterAdmin.id },
+    data: { message: "Venue change: Crypt Clash has moved to Computer Lab 1 (Block C).", createdBy: masterAdmin.id },
   });
 
   console.log("\nSeeding complete.\n");

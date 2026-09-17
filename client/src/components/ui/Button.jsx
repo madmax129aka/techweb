@@ -1,4 +1,6 @@
 import React from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { EASE_CINEMATIC } from "@/lib/motion";
 
 const VARIANTS = {
   primary:
@@ -33,11 +35,27 @@ export default function Button({
   ...props
 }) {
   const isLink = variant === "link";
+  const reduce = useReducedMotion();
+
+  // Smooth hover/tap feedback via Framer Motion. Reduced-motion users and
+  // disabled buttons get no transform animation (per the app's "remove the
+  // motion, not the element" convention). The link variant is an
+  // understated text CTA that already animates its own underline in CSS,
+  // so it's left with just a light tap response.
+  const interactive = !disabled && !reduce;
+  const motionFeedback = interactive
+    ? {
+        whileHover: isLink ? { x: 2 } : { scale: 1.03, y: -1 },
+        whileTap: { scale: 0.97 },
+        transition: { duration: 0.2, ease: EASE_CINEMATIC },
+      }
+    : {};
 
   return (
-    <button
+    <motion.button
       type={type}
       disabled={disabled}
+      {...motionFeedback}
       className={`
         inline-flex items-center justify-center gap-2 font-semibold
         transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed
@@ -55,6 +73,6 @@ export default function Button({
         {children}
         {isLink && <span aria-hidden="true">&rarr;</span>}
       </span>
-    </button>
+    </motion.button>
   );
 }

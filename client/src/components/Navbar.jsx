@@ -2,9 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import TechAstraLogo from "./TechAstraLogo";
 import FullScreenMenu from "./FullScreenMenu";
-import CoreWatermark from "./CoreWatermark";
+// NOTE: TechAstraLogo + CoreWatermark are intentionally NOT imported here
+// anymore. The Events landing page redesign makes the logo the CENTERED
+// hero emblem of that page (Rolls-Royce style) - having it ALSO in the
+// nav's top-left corner creates a duplicate anchor and pulls visual
+// weight to the top-left, fighting the intended symmetry. The nav is now
+// purely functional chrome: text links + cart + login + hamburger.
 
 const PORTAL_PATH = {
   registration_team: "/registration-team",
@@ -60,28 +64,20 @@ export default function Navbar() {
           menuOpen ? "invisible" : ""
         }`}
       >
-        <nav className="max-w-7xl mx-auto flex items-center justify-between px-5 sm:px-8 py-4">
-          {/* Logo now links to /events, not "/" - this app has no
-              homepage of its own (see the scope-correction note in
-              App.jsx); /events IS the entry point, so this is just the
-              more direct target ("/" still redirects here anyway).
-
-              Section 5C secondary placement: a small, static
-              (non-orbiting) watermark of just the core gem sits right
-              beside the wordmark - the header's visual "corner", without
-              being absolutely positioned (which risked overlapping the
-              cart/dashboard/hamburger cluster on the opposite side at
-              narrower "sm+" widths). Hidden below `sm` since there isn't
-              room for a purely decorative extra element next to the
-              logo on small screens. */}
-          <Link to="/events" className="flex items-center gap-2.5" data-log="nav-logo">
-            <TechAstraLogo size="sm" />
-            <CoreWatermark size={26} className="hidden sm:block" />
-          </Link>
-
-          {/* Leaderboard link removed - that page now lives on the
-              separate main marketing site, not this Registration Portal
-              app (see App.jsx's scope-correction note). */}
+        {/* EXPLICIT h-14 (56px) - not py-3 - so this header has ONE
+            canonical height that other layout code (App.jsx's main
+            padding, EventDetail's sticky sub-nav top offset) can lock
+            to. Padding-only heights are fragile: a later "make the nav
+            slimmer" tweak silently breaks every hard-coded offset
+            elsewhere. Anything that needs to sit flush under this bar
+            should use `top-14` / `pt-14`. */}
+        <nav className="max-w-7xl mx-auto h-14 flex items-center justify-between px-5 sm:px-8">
+          {/* LEFT CLUSTER: functional nav text links only. The logo used
+              to live here (with a CoreWatermark beside it) - it's now
+              the centered hero emblem on the Events page instead, so
+              the left corner is just the primary nav links. Hidden
+              below `md` for phone screens (the hamburger menu on the
+              right exposes the same routes there). */}
           <div className="hidden md:flex items-center gap-8">
             <Link to="/events" className="nav-link-cinematic" data-log="nav-events">
               Events
@@ -90,6 +86,14 @@ export default function Navbar() {
               Verify Certificate
             </Link>
           </div>
+
+          {/* Placeholder that occupies the LEFT slot on phone widths
+              where the two text links above are hidden, so the right
+              cluster (cart/login/hamburger) stays anchored right rather
+              than collapsing to the middle. `flex-1 md:flex-none` gives
+              the row its expected shape on both sides of the breakpoint
+              without needing a whole extra media query. */}
+          <div className="md:hidden flex-1" aria-hidden="true" />
 
           <div className="flex items-center gap-5">
             <Link to="/cart" className="relative text-offwhite/85 hover:text-arc transition-colors" data-log="nav-cart">

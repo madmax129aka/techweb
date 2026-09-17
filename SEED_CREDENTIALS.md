@@ -27,16 +27,23 @@ management, event management, results override, announcements, data export.
 
 ## Event Coordinators (one per seeded event)
 
-| Event | Email |
-|---|---|
-| Coding Marathon | coordinator.codingmarathon@techastra.dev |
-| Paper Presentation | coordinator.paperpresentation@techastra.dev |
-| Hackathon | coordinator.hackathon@techastra.dev |
-| Tech Quiz | coordinator.techquiz@techastra.dev |
-| Robo Race | coordinator.roborace@techastra.dev |
-| Web Design Contest | coordinator.webdesigncontest@techastra.dev |
-| Poster Presentation | coordinator.posterpresentation@techastra.dev |
-| Startup Pitch | coordinator.startuppitch@techastra.dev |
+| Event | Track | Email |
+|---|---|---|
+| Pen Your Vision | Technical | coordinator.penyourvision@techastra.dev |
+| Hack Nexus | Technical | coordinator.hacknexus@techastra.dev |
+| Crypt Clash | Technical | coordinator.cryptclash@techastra.dev |
+| Trial of Truth | Technical | coordinator.trialoftruth@techastra.dev |
+| Code Rescue | Technical | coordinator.coderescue@techastra.dev |
+| Pixel Protocol | Technical | coordinator.pixelprotocol@techastra.dev |
+| Forensic Alibi | Technical | coordinator.forensicalibi@techastra.dev |
+| Prompt Arena | Technical | coordinator.promptarena@techastra.dev |
+| Rythm Riot | Non-Technical | coordinator.rythmriot@techastra.dev |
+| 70MM Decode | Non-Technical | coordinator.70mmdecode@techastra.dev |
+| Verbal Combat | Non-Technical | coordinator.verbalcombat@techastra.dev |
+| Blitz Hunt | Non-Technical | coordinator.blitzhunt@techastra.dev |
+| Plot Twist | Non-Technical | coordinator.plottwist@techastra.dev |
+| Team Fued | Non-Technical | coordinator.teamfued@techastra.dev |
+| Cap Chaos | Non-Technical | coordinator.capchaos@techastra.dev |
 
 Each coordinator can only check in / submit results for their own
 `assignedEventId` - enforced server-side, not just hidden in the UI.
@@ -71,11 +78,11 @@ inspect the `Registration` table directly.
 A few approved participants also have password-based logins seeded (same
 `TechAstra@2026` password), e.g.:
 
-- `arun.kumar@example.com` (Coding Marathon + Tech Quiz, approved, has a
+- `arun.kumar@example.com` (Code Rescue + Trial of Truth, approved, has a
   locked 1st-place result + winner certificate)
-- `divya.sree@example.com` (Paper Presentation, approved, has a participation
+- `divya.sree@example.com` (Pen Your Vision, approved, has a participation
   certificate)
-- `meena.priya@example.com` (Hackathon team lead "Byte Busters", approved,
+- `meena.priya@example.com` (Hack Nexus team lead "Byte Busters", approved,
   team placed 1st with a winner certificate)
 
 ## Re-seeding
@@ -91,6 +98,9 @@ npm run seed
 
 ## Demo Events
 
-The 8 seeded events (name, track, fee, seats) are **placeholder data** -
-swap them out for the real symposium event list once finalized. See
-`server/prisma/seed.js` -> `buildDemoEvents()`.
+The 15 seeded events are the **finalized official event list** - 8
+Technical + 7 Non-Technical (see the coordinator table above for the full
+names and track split). Sample times, fees, seat counts, venues, and
+rulebook text are still illustrative placeholders for those specific
+details - update them in `server/prisma/seed.js` -> `buildDemoEvents()`
+once the real schedule/fee/venue numbers are set.
