@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import Button from "../components/ui/Button";
 import TechAstraLogo from "../components/TechAstraLogo";
 import EventsCoverFlow from "../components/ui/EventsCoverFlow";
-import { getEventImage } from "../lib/eventImages";
+import { getEventImage, getEventIconSrc } from "../lib/eventImages";
 import { api } from "../lib/api";
 import { useCart } from "../context/CartContext";
 import { fadeUp, fadeIn, staggerContainer, staggerContainerSlow, EASE_CINEMATIC } from "../lib/motion";
@@ -97,6 +97,12 @@ export default function Events() {
   const slides = useMemo(
     () =>
       visibleEvents.map((event) => ({
+        // `iconSrc` is tried FIRST (see EventsCoverFlow's onError
+        // handler); `src` is the existing stock/Picsum photo, kept as
+        // the fallback for any event whose custom icon file doesn't
+        // exist yet in client/public/icons/senior-techastra/ - so a
+        // gradual rollout never shows a broken image or an empty card.
+        iconSrc: getEventIconSrc(event),
         src: getEventImage(event.name),
         alt: event.name,
         title: event.name,

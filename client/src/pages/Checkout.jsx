@@ -120,8 +120,8 @@ export default function Checkout() {
           />
         </div>
 
-        <div className="flex gap-3">
-          <Button type="button" variant="outline" onClick={() => navigate("/register")} data-log="checkout-back-to-details">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button type="button" variant="outline" onClick={() => navigate("/register")} data-log="checkout-back-to-details" className="sm:flex-none">
             Back to Details
           </Button>
           <Button type="submit" className="flex-1" disabled={submitting}>

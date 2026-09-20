@@ -31,6 +31,19 @@ export default function App() {
   // other page is completely unaffected) avoids stacking two headers/
   // cursors/footers on top of each other on /login.
   const isCinematicLogin = pathname === "/login";
+  // Event Detail (/events/:id) opts OUT of the shared cinematic backdrop -
+  // that route now has its own full-screen video Hero (that event's own
+  // real video where one's been uploaded, hack-nexus.mp4 as a fallback
+  // otherwise - see getEventVideoSrc in lib/eventVideos.js) as its sole
+  // background, and
+  // flat solid-color sections below it (see .event-detail-solid-bg in
+  // index.css) - the ambient site-wide video would otherwise still show
+  // through those solid sections' semi-transparent paint, which is
+  // exactly the "no cinematic/ambient bg bleeding in anywhere on this
+  // page" requirement this excludes. Every other route (Events list,
+  // Login, Dashboard, portals, etc.) is completely unaffected - this
+  // checks ONE specific route pattern, not a general rule change.
+  const isEventDetail = /^\/events\/[^/]+$/.test(pathname);
 
   return (
     <div className="app-shell min-h-screen flex flex-col">
@@ -39,8 +52,10 @@ export default function App() {
           /login) shows the exact same treatment instead of each page
           rendering its own separately-tuned video. See CinematicBackground
           and the .cinematic-bg-* / .app-shell rules in index.css for the
-          stacking-order fix that keeps this actually visible. */}
-      <CinematicBackground />
+          stacking-order fix that keeps this actually visible.
+          NOT mounted on Event Detail (/events/:id) - see isEventDetail
+          above. */}
+      {!isEventDetail && <CinematicBackground />}
 
       {!isCinematicLogin && <Navbar />}
       {/*

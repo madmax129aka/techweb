@@ -2,7 +2,7 @@
  * Seed script for TechAstra Symposium Portal.
  *
  * Populates:
- *  - 15 FINAL events across two tracks - 8 Technical + 7 Non-Technical,
+ *  - 16 FINAL events across two tracks - 8 Technical + 8 Non-Technical (including Esports),
  *    per the finalized official event list (this is NOT placeholder
  *    data anymore; the earlier 8-event "Coding Marathon / Hackathon /
  *    Tech Quiz / ..." set was the placeholder, replaced wholesale here)
@@ -30,7 +30,7 @@ const COLLEGES = [
   "PSG College of Technology",
 ];
 
-// FINAL event list (8 Technical + 7 Non-Technical). Sample times, fees,
+// FINAL event list (8 Technical + 8 Non-Technical including Esports). Sample times, fees,
 // seat counts, venues, and rulebook text below are still illustrative
 // placeholders for THOSE specific details - swap in the real schedule/
 // fee/venue numbers once finalized - but the event NAMES, tracks, and
@@ -169,7 +169,7 @@ function buildDemoEvents() {
     },
 
     // ---------------------------------------------------------------
-    // NON-TECHNICAL EVENTS (7)
+    // NON-TECHNICAL EVENTS (8 including Esports)
     // ---------------------------------------------------------------
     {
       name: "Rythm Riot",
@@ -276,7 +276,48 @@ function buildDemoEvents() {
       venue: "Media Lab",
       rulebook: "Individual event. New image revealed every round; submit your caption within 60 seconds. Audience + judges vote.",
     },
+    {
+      name: "Clash Squad Esports",
+      description: "Battle it out in intense Free Fire and BGMI tournaments. Form your squad and compete for supremacy in the ultimate mobile esports showdown.",
+      track: "Esports",
+      category: "non_technical",
+      startTime: day(10, 0),
+      endTime: day(16, 0),
+      fee: 200,
+      maxSeats: 80,
+      isTeamEvent: true,
+      minTeamSize: 4,
+      maxTeamSize: 4,
+      venue: "Gaming Arena",
+      rulebook: "Teams of 4 players. Tournament format: group stage followed by knockout rounds. Players must bring their own devices. Both Free Fire and BGMI tournaments will run simultaneously.",
+    },
   ];
+}
+
+/**
+ * Dummy `coordinatorContacts` data (Event Detail page's "COORDINATORS"
+ * block - see EventDetail.jsx). Real names/roles/numbers will replace
+ * this once coordinators confirm; for now every event gets 2-3
+ * placeholder entries (mixing "Event Coordinator" and "Staff
+ * Coordinator" roles) so the variable-length layout can be checked
+ * against a realistic count before real data comes in.
+ *
+ * Deterministic per event (based on its position in the array) rather
+ * than random, so re-running the seed produces the same dummy contacts
+ * each time instead of a different count on every run.
+ */
+function buildDummyCoordinatorContacts(index) {
+  const contacts = [
+    { name: `TBD Coordinator ${index + 1}A`, role: "Event Coordinator", phone: "+91 00000 00000" },
+    { name: `TBD Staff ${index + 1}A`, role: "Staff Coordinator", phone: "+91 00000 00000" },
+  ];
+  // Every third event (index 2, 5, 8, ...) gets a 3rd contact, so the
+  // seed data includes a realistic mix of 2-coordinator and
+  // 3-coordinator events instead of a uniform count everywhere.
+  if (index % 3 === 2) {
+    contacts.push({ name: `TBD Coordinator ${index + 1}B`, role: "Event Coordinator", phone: "+91 00000 00000" });
+  }
+  return contacts;
 }
 
 async function upsertStaff({ name, email, role, assignedEventId, dutyDesk, dutyTiming, dutyRole }) {
@@ -347,10 +388,11 @@ async function main() {
   // 1. Events
   const eventData = buildDemoEvents();
   const events = [];
-  for (const data of eventData) {
+  for (let i = 0; i < eventData.length; i++) {
+    const data = { ...eventData[i], coordinatorContacts: buildDummyCoordinatorContacts(i) };
     const event = await prisma.event.create({ data });
     events.push(event);
-    console.log(`Created event: ${event.name}`);
+    console.log(`Created event: ${event.name} (${data.coordinatorContacts.length} coordinator contacts)`);
   }
   const [
     penVision, hackNexus, cryptClash, trialOfTruth, codeRescue, pixelProtocol, forensicAlibi, promptArena,

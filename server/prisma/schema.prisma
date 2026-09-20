@@ -49,6 +49,17 @@ model Event {
   maxTeamSize   Int      @default(1)
   rulebook      String?
   venue         String?
+  // Display-only contact info shown on the Event Detail page (name/role/
+  // phone per person) - NOT the same thing as `coordinators` below, which
+  // is real coordinator USER ACCOUNTS used for login/auth/QR-scanning
+  // permissions. This field is deliberately a separate, unrelated column
+  // so it never collides with that relation. Shape: an array of
+  // { name: string, role: string, phone: string } - variable length,
+  // since some events have 1 coordinator and others have several.
+  // Defaults to an empty array so existing events created before this
+  // field existed don't break (no coordinator contacts shown, not a
+  // crash) until real data is filled in.
+  coordinatorContacts Json @default("[]")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

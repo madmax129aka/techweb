@@ -51,8 +51,35 @@ export default function QRScanner({ onScan, active = true }) {
     }
 
     let cancelled = false;
+    let cleanedUp = false;
     const html5QrCode = new Html5Qrcode(SCANNER_ELEMENT_ID);
     scannerRef.current = html5QrCode;
+
+    // Hard fallback: directly stop every MediaStream track feeding any
+    // <video> element inside the scanner viewport, independent of
+    // whether html5-qrcode's own stop()/clear() promises ever resolve.
+    // This is the actual fix for "scan on a phone, then the page never
+    // comes back" - the previous cleanup called stop() and clear() in
+    // PARALLEL (`.stop().catch(...)` and `.clear().catch(...)` fired
+    // back-to-back with no `await` between them), which is a documented
+    // html5-qrcode race: clear() can run while stop() is still mid-way
+    // through asynchronously releasing the camera track, especially on
+    // mobile Safari/Chrome - leaving an active camera stream held open
+    // with no UI left able to release it, which is exactly what makes a
+    // page "not come back" after scanning (it looks frozen/stuck until
+    // force-reloaded, because the camera hardware lock never actually
+    // let go).
+    const forceReleaseCamera = () => {
+      const container = document.getElementById(SCANNER_ELEMENT_ID);
+      const videos = container ? container.querySelectorAll("video") : [];
+      videos.forEach((video) => {
+        const stream = video.srcObject;
+        if (stream && typeof stream.getTracks === "function") {
+          stream.getTracks().forEach((track) => track.stop());
+        }
+        video.srcObject = null;
+      });
+    };
 
     const config = { fps: 10, qrbox: { width: 240, height: 240 } };
     const onSuccess = (decodedText) => {
@@ -94,8 +121,20 @@ export default function QRScanner({ onScan, active = true }) {
 
     return () => {
       cancelled = true;
-      html5QrCode.stop().catch(() => {});
-      html5QrCode.clear().catch(() => {});
+      if (cleanedUp) return;
+      cleanedUp = true;
+
+      // `stop()` is awaited BEFORE `clear()` runs (not fired in
+      // parallel, per the bug note above) so the camera track is
+      // actually released first. Either promise rejecting still falls
+      // through to `forceReleaseCamera()` in `finally`, so a stuck
+      // camera can't survive this cleanup even if the library's own
+      // promises misbehave.
+      html5QrCode
+        .stop()
+        .catch(() => {})
+        .then(() => html5QrCode.clear().catch(() => {}))
+        .finally(forceReleaseCamera);
     };
   }, [active, onScan]);
 

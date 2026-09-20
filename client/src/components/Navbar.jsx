@@ -3,12 +3,25 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import FullScreenMenu from "./FullScreenMenu";
-// NOTE: TechAstraLogo + CoreWatermark are intentionally NOT imported here
-// anymore. The Events landing page redesign makes the logo the CENTERED
-// hero emblem of that page (Rolls-Royce style) - having it ALSO in the
-// nav's top-left corner creates a duplicate anchor and pulls visual
-// weight to the top-left, fighting the intended symmetry. The nav is now
-// purely functional chrome: text links + cart + login + hamburger.
+import TechAstraLogo from "./TechAstraLogo";
+// NOTE ON THE ABOVE IMPORT: TechAstraLogo + CoreWatermark used to be
+// intentionally left OUT of this header entirely - the Events landing
+// page redesign made the logo the CENTERED hero emblem of that page
+// instead (Rolls-Royce style), and having it ALSO in the nav's top-left
+// corner was judged a duplicate anchor fighting that page's intended
+// symmetry.
+//
+// Re-added here (top-left, `size="sm"` - same size already used for
+// this exact logo in a slim header bar on Login.jsx's own header) at the
+// Event Detail page's request: that page's header now floats
+// transparently over a full-screen video with no other logo/emblem
+// anywhere else on the page (unlike Events.jsx, which still has its own
+// large centered logo), so the "duplicate anchor" concern that justified
+// removing it doesn't apply there. Showing it site-wide (rather than
+// only on Event Detail) keeps this one shared header consistent across
+// every route, including Events - where it now sits quietly in the
+// corner alongside the nav links, additive to (not competing with) that
+// page's own separate hero-sized logo, at a much smaller scale.
 
 const PORTAL_PATH = {
   registration_team: "/registration-team",
@@ -72,31 +85,44 @@ export default function Navbar() {
             elsewhere. Anything that needs to sit flush under this bar
             should use `top-14` / `pt-14`. */}
         <nav className="max-w-7xl mx-auto h-14 flex items-center justify-between px-5 sm:px-8">
-          {/* LEFT CLUSTER: functional nav text links only. The logo used
-              to live here (with a CoreWatermark beside it) - it's now
-              the centered hero emblem on the Events page instead, so
-              the left corner is just the primary nav links. Hidden
-              below `md` for phone screens (the hamburger menu on the
-              right exposes the same routes there). */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link to="/events" className="nav-link-cinematic" data-log="nav-events">
-              Events
+          {/* LEFT CLUSTER: logo (far top-left, before the nav links) +
+              functional nav text links. `size="sm"` (no `showGlow`
+              override, same default `true` the glow already uses) is
+              an exact match for how this logo already renders in a slim
+              header bar on Login.jsx's own header (`<TechAstraLogo
+              size="sm" />` there too) - not a new size/treatment
+              invented for this spot. `shrink-0` keeps it from being
+              squeezed by the nav links on medium widths; `gap-6`/`gap-8`
+              gives it the same breathing room as the links have from
+              each other. */}
+          <div className="flex items-center gap-6 sm:gap-8">
+            <Link to="/events" className="shrink-0" data-log="nav-logo">
+              <TechAstraLogo size="sm" />
             </Link>
-            <Link to="/verify-certificate" className="nav-link-cinematic" data-log="nav-verify-certificate">
-              Verify Certificate
-            </Link>
+
+            {/* Hidden below `md` for phone screens (the hamburger menu on
+                the right exposes the same routes there). */}
+            <div className="hidden md:flex items-center gap-8">
+              <Link to="/events" className="nav-link-cinematic" data-log="nav-events">
+                Events
+              </Link>
+              <Link to="/verify-certificate" className="nav-link-cinematic" data-log="nav-verify-certificate">
+                Verify Certificate
+              </Link>
+            </div>
           </div>
 
-          {/* Placeholder that occupies the LEFT slot on phone widths
-              where the two text links above are hidden, so the right
-              cluster (cart/login/hamburger) stays anchored right rather
-              than collapsing to the middle. `flex-1 md:flex-none` gives
-              the row its expected shape on both sides of the breakpoint
-              without needing a whole extra media query. */}
+          {/* Placeholder that occupies the middle slot on phone widths
+              where the text links above are hidden (logo still shows),
+              so the right cluster (cart/login/hamburger) stays anchored
+              right rather than collapsing toward the logo. `flex-1
+              md:flex-none` gives the row its expected shape on both
+              sides of the breakpoint without needing a whole extra
+              media query. */}
           <div className="md:hidden flex-1" aria-hidden="true" />
 
           <div className="flex items-center gap-5">
-            <Link to="/cart" className="relative text-offwhite/85 hover:text-arc transition-colors" data-log="nav-cart">
+            <Link to="/cart" className="relative p-3 -m-3 text-offwhite/85 hover:text-arc transition-colors" aria-label="Shopping cart" data-log="nav-cart">
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
                 <circle cx="9" cy="20" r="1.4" />
                 <circle cx="18" cy="20" r="1.4" />
@@ -126,7 +152,7 @@ export default function Navbar() {
             <button
               onClick={() => setMenuOpen(true)}
               aria-label="Open menu"
-              className="flex flex-col items-end gap-1.5 group cursor-hover"
+              className="flex flex-col items-end gap-1.5 group cursor-hover p-3 -m-3"
               data-log="nav-open-menu"
             >
               <span className="block w-6 h-px bg-offwhite/85 group-hover:bg-arc transition-colors" />

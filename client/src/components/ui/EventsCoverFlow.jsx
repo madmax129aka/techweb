@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
+import EventCardImage from "../EventCardImage";
 
 /**
  * EventsCoverFlow
@@ -71,6 +72,7 @@ const ChevronRightIcon = () => (
     <path d="M9 5l7 7-7 7" />
   </svg>
 );
+
 
 export default function EventsCoverFlow({
   slides = [],
@@ -277,22 +279,35 @@ export default function EventsCoverFlow({
                   cursor: "pointer",
                 }}
               >
-                {/* Card photo. eager-load the 5 cards in the visible
-                    window, lazy-load the rest. */}
-                {slide.src && (
-                  <img
-                    src={slide.src}
-                    alt={slide.alt || slide.title || ""}
-                    loading={Math.abs(idx - currentIndex) <= 2 ? "eager" : "lazy"}
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                )}
+                {/* Card image - custom per-event icon (Senior Techastra
+                    set) if one exists at that event's resolved path,
+                    falling back to the existing stock/Picsum photo if
+                    it 404s (icons are being added gradually - see
+                    getEventIconSrc in lib/eventImages.js). Tracked in
+                    LOCAL state (not a prop) because the SAME <img> tag
+                    tries `iconSrc` first, then swaps its own `src` to
+                    the fallback on error - the fallback state must
+                    reset per-slide, hence keying the effect on
+                    `slide.iconSrc`.
+
+                    Icons are small/centered emblems, not full-bleed
+                    photography - object-fit:cover would stretch/crop
+                    them into something they were never designed for. So
+                    when an icon is what's actually showing, the image is
+                    "contain"-fit and padded within a flat dark card
+                    background (reusing the card's own existing
+                    `#1A0505` - the site's `surface` token) instead of
+                    filling the card edge-to-edge like a photo does. The
+                    stock-photo fallback keeps the original full-bleed
+                    `cover` treatment unchanged - only icons get the
+                    contained treatment. */}
+                <EventCardImage
+                  key={slide.iconSrc || slide.src}
+                  iconSrc={slide.iconSrc}
+                  photoSrc={slide.src}
+                  alt={slide.alt || slide.title || ""}
+                  eager={Math.abs(idx - currentIndex) <= 2}
+                />
 
                 {/* Dark scrim over the photo - keeps text legible
                     without needing a solid caption bar. */}

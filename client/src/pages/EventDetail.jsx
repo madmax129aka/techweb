@@ -3,17 +3,16 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import Button from "../components/ui/Button";
-import CinematicImage from "../components/CinematicImage";
+import EventCardImage from "../components/EventCardImage";
 import EventHeroMedia from "../components/EventHeroMedia";
-import { getEventImage } from "../lib/eventImages";
-import { getEventVideoSrc } from "../lib/eventVideos";
+import EventScrollFeatureSection from "../components/EventScrollFeatureSection";
+import { getEventImage, getEventIconSrc } from "../lib/eventImages";
+import { getEventVideoSrc } from "../lib/eventVideos"; // kept imported (even though only referenced in a commented-out revert line below) so uncommenting that line to restore per-event video resolution needs zero other changes
 import { getEventStatement } from "../lib/eventStatement";
 import { api } from "../lib/api";
 import { useCart } from "../context/CartContext";
 import {
   fadeUp,
-  fadeInLeft,
-  fadeInRight,
   staggerContainer,
   revealProps,
   viewportOnce,
@@ -25,10 +24,6 @@ const TABS = [
   { key: "rules", label: "Rules" },
   { key: "register", label: "Register" },
 ];
-
-function formatTime(iso) {
-  return new Date(iso).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" });
-}
 
 /**
  * Event story page - Rolls-Royce Motor Cars "Phantom model page" pattern:
@@ -58,6 +53,29 @@ export default function EventDetail() {
   const reduce = useReducedMotion();
   const switcherRef = useRef(null);
 
+  // ROOT-CAUSE FIX ("top utility bar still shows solid background over
+  // the Hero video, even after .nav-cinematic's own gradient was already
+  // fixed to match the sub-nav"): the real cause isn't a CSS rule at
+  // all - it's that React Router does NOT reset `window.scrollY` to 0 on
+  // a client-side navigation (this is documented default behavior, and
+  // there was no `useEffect`/`<ScrollRestoration>` anywhere in this app
+  // resetting it either - confirmed by search). Navbar.jsx's own
+  // `scrolled` state is computed from a synchronous `window.scrollY > 60`
+  // check that runs immediately on mount - so arriving on this page
+  // already scrolled down (e.g. the visitor scrolled the Events list
+  // before clicking into an event) puts the shared header into its
+  // `.nav-scrolled` near-solid state from EventDetail's very first
+  // frame, regardless of what `.nav-cinematic`'s base (non-scrolled)
+  // gradient looks like - which is exactly why the previous fix to that
+  // gradient had no visible effect for a scrolled-in visitor. Scoped fix
+  // here (this page only, not a global Navbar/App-level scroll-reset
+  // change) resets the browser's actual scroll position on mount, so
+  // the shared header's own existing scroll check correctly evaluates
+  // to "not scrolled" and renders its transparent base state.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
   useEffect(() => {
     setLoading(true);
     api
@@ -71,6 +89,16 @@ export default function EventDetail() {
       .then((data) => setOtherEvents((data.events || []).filter((e) => e.id !== id)))
       .catch(() => {});
   }, [id]);
+
+  // Model-switcher popover (sub-nav chevron) shows only OTHER events in
+  // the SAME category as the current one (e.g. Hack Nexus -> Technical
+  // events only), matching the site's main Events mega-menu grouping
+  // (FullScreenMenu.jsx's `byCategory`) - `otherEvents` itself stays
+  // unfiltered by category since Section 6 ("Continue Your Journey")
+  // still wants the full cross-category list.
+  const switcherEvents = event
+    ? otherEvents.filter((e) => (e.category === "non_technical" ? "non_technical" : "technical") === (event.category === "non_technical" ? "non_technical" : "technical"))
+    : [];
 
   // Sub-nav shrink/darken past the hero (100vh) - same threshold idea as
   // Navbar.jsx's own scrolled-state check, just measured against this
@@ -151,6 +179,14 @@ export default function EventDetail() {
   const categoryLabel = event.track || (event.category === "non_technical" ? "Non-Technical" : "Technical");
   const statement = getEventStatement(event.description);
 
+  // Per-event video, now that real files exist for several events (see
+  // EVENT_VIDEO_FILES in lib/eventVideos.js for the exact event-name ->
+  // filename map and why it's an explicit map rather than a derived
+  // slug). Events without their own uploaded file automatically resolve
+  // to the hack-nexus.mp4 placeholder from inside getEventVideoSrc
+  // itself now - no override needed at this call site anymore.
+  const heroVideoSrc = getEventVideoSrc(event.name);
+
   return (
     <div>
       {/* ==================================================================
@@ -167,12 +203,27 @@ export default function EventDetail() {
           subNavScrolled ? "sub-nav-scrolled" : ""
         }`}
       >
-        <div className="max-w-6xl mx-auto w-full px-6 flex items-center justify-between overflow-x-auto">
+        {/* ROOT-CAUSE FIX ("chevron dropdown does nothing"): `overflow-x-
+            auto` on this row forces `overflow-y: auto` too per the CSS
+            spec (you can't set one axis to a non-`visible` value while
+            leaving the other `visible`) - so the switcher's `absolute`
+            dropdown below, which needs to overflow this row's own
+            bottom edge to be seen, was being clipped/hidden by this
+            container the instant it opened. It LOOKED like the click did
+            nothing; `switcherOpen` was actually flipping to `true` the
+            whole time. Horizontal scroll on narrow widths (the original
+            reason for `overflow-x-auto`) still isn't needed in practice -
+            this row's few items already wrap/shrink fine - so the
+            property is dropped rather than replicating the clipping bug
+            with a workaround. */}
+        <div className="max-w-6xl mx-auto w-full px-6 flex items-center justify-between">
           {/* Event name + functional chevron "model switcher" - clicking
-              it opens a popover listing every OTHER event, so a visitor
-              can jump straight to a different event's page without
-              backing out to /events first. Reuses the `otherEvents`
-              fetch already made for Section 6 below - no second API
+              it opens a popover listing other events in the SAME
+              category (Technical/Non-Technical) as this one, so a
+              visitor can jump straight to a similar event's page
+              without backing out to /events first. Reuses the
+              `otherEvents` fetch already made for Section 6 below (via
+              the category-filtered `switcherEvents`) - no second API
               call. */}
           <div ref={switcherRef} className="relative">
             <button
@@ -213,10 +264,10 @@ export default function EventDetail() {
                   role="listbox"
                   aria-label="Jump to another event"
                 >
-                  {otherEvents.length === 0 && (
-                    <p className="px-4 py-2 text-xs text-offwhite/40">No other events yet</p>
+                  {switcherEvents.length === 0 && (
+                    <p className="px-4 py-2 text-xs text-offwhite/40">No other {categoryLabel} events yet</p>
                   )}
-                  {otherEvents.map((e) => (
+                  {switcherEvents.map((e) => (
                     <button
                       key={e.id}
                       type="button"
@@ -253,142 +304,123 @@ export default function EventDetail() {
       </div>
 
       {/* ==================================================================
-          SECTION 1 - HERO (full 100vh)
+          SECTION 1 - HERO (true full-viewport video, rolls-roycemotorcars.
+          com reference pattern)
           ==================================================================
+          `-mt-14 h-screen` pulls this section up by the Navbar's h-14
+          (56px) and grows it to a full 100vh (`h-screen`, not `min-h-
+          screen` - this section has no text content driving its height
+          anymore, so it must be pinned to exactly 100vh rather than
+          "at least 100vh"), so the video starts at the TRUE top of the
+          viewport (y=0) instead of 56px down from it. The sticky sub-nav
+          right above this section in the DOM is completely untouched -
+          it still occupies its own 56px of normal flow immediately
+          under the fixed Navbar - this negative margin only pulls THIS
+          section's own box up to sit visually behind/under both of
+          them, exactly like the transparent-header-over-hero pattern
+          already used on Navbar.jsx (fixed, transparent nav overlaying
+          whatever content is behind it) - reused here rather than
+          reinvented.
+
           `videoBlur` softens the video layer itself (filter: blur+
           brightness on the <video> element) so the footage reads as
-          atmospheric background rather than sharp foreground clip, on
-          top of the existing "full" scrim (a flat dark wash, needed
-          because this headline is CENTERED rather than bottom-anchored -
-          a bottom-only gradient would leave centered text sitting on
-          unmodified pixels). Headline uses `font-italiana` - the tall,
-          wide-tracked display serif already loaded site-wide and used
-          on the Login page - matching the reference's model-name
-          typography, still centered (not lower-third) per confirmed
-          scope. */}
-      <section className="relative min-h-screen flex items-center justify-center" id="overview">
+          atmospheric background rather than sharp foreground clip.
+          `scrim="full"` stays (a flat dark wash) purely so the video
+          reads as a moody backdrop consistent with the rest of the
+          site's cinematic treatment - NOT for text contrast anymore,
+          since no text is overlaid on this section now (moved to
+          Section 2 below, see that section's own comment). */}
+      <section className="relative h-screen -mt-14 overflow-hidden" id="overview">
         <EventHeroMedia
-          videoSrc={getEventVideoSrc(event.name)}
+          videoSrc={heroVideoSrc}
           imageSrc={getEventImage(event.name)}
           alt={event.name}
           scrim="full"
           videoBlur
         />
+      </section>
+
+      {/* ==================================================================
+          SECTIONS 2-6 WRAPPER - flat solid background, no cinematic/
+          ambient bg anywhere on this page
+          ==================================================================
+          `.event-detail-solid-bg` (index.css) is a flat `background:
+          var(--color-bg-base)` fill - the SAME token already used
+          site-wide for `bg-void` (Login page, footer, card footers), not
+          a new color. This wrapper starts right after the Hero's closing
+          </section> (the Hero itself stays untouched - video only, no
+          solid fill behind it) and covers every section from here to the
+          end of the page, so once a visitor scrolls past the full-screen
+          video there is a clean flat color underneath everything - no
+          CinematicBackground showing through (that component isn't even
+          mounted on this route anymore, see App.jsx's `isEventDetail`
+          check), and no gradient/video bleed from anywhere else either. */}
+      <div className="event-detail-solid-bg">
+      {/* ==================================================================
+          SECTION 2 - THE STATEMENT (full 100vh, plain background, no
+          video/image at all)
+          ==================================================================
+          The eyebrow ("HACKATHON"-style category label) + event name
+          headline used to be centered ON TOP of the Hero video (Section
+          1). Moved here instead, at the TOP of this section, so it's
+          the first thing revealed once the visitor scrolls past the
+          now-textless full-screen video - same fonts/styling as before
+          (font-italiana headline, arc/cyan eyebrow), just relocated.
+          `statement` is derived from `event.description` via
+          `getEventStatement()` (lib/eventStatement.js) - the first
+          sentence, or the full description if it has no sentence break.
+          No image/video layer here at all - this section sits on the
+          flat solid-color wrapper above (`.event-detail-solid-bg`), not
+          the shared app-wide CinematicBackground (which isn't mounted
+          on this route at all anymore) - matching "plain background, no
+          video" from the brief. */}
+      <section className="relative min-h-screen flex items-center justify-center px-6">
         <motion.div
-          className="relative z-10 max-w-3xl mx-auto px-6 text-center"
+          className="relative z-10 max-w-3xl mx-auto text-center"
           variants={staggerContainer}
           initial={reduce ? false : "hidden"}
-          animate="show"
+          whileInView="show"
+          viewport={viewportOnce}
         >
           <motion.p variants={fadeUp} className="text-arc text-[11px] tracking-cinematic uppercase mb-5">
             {categoryLabel}
           </motion.p>
           <motion.h1
             variants={fadeUp}
-            className="font-italiana text-5xl sm:text-7xl lg:text-8xl text-offwhite leading-none tracking-wide"
+            className="font-italiana text-5xl sm:text-7xl lg:text-8xl text-offwhite leading-none tracking-wide mb-10"
           >
             {event.name}
           </motion.h1>
-        </motion.div>
-      </section>
-
-      {/* ==================================================================
-          SECTION 2 - THE STATEMENT (full 100vh, plain background, no
-          video/image at all)
-          ==================================================================
-          `statement` is derived from `event.description` via
-          `getEventStatement()` (lib/eventStatement.js) - the first
-          sentence, or the full description if it has no sentence break.
-          No image/video layer here at all; the shared app-wide
-          CinematicBackground still shows through very faintly behind
-          this section (same as every other page), but nothing
-          event-specific is rendered on top of it - matching "plain
-          background, no video" from the brief. */}
-      <section className="relative min-h-screen flex items-center justify-center px-6">
-        <motion.p
-          className="relative z-10 max-w-3xl mx-auto text-center font-serif text-2xl sm:text-4xl lg:text-5xl text-offwhite/90 leading-relaxed"
-          {...revealProps(reduce, fadeUp)}
-        >
-          {statement}
-        </motion.p>
-      </section>
-
-      {/* ==================================================================
-          SECTION 3 - THE EVENT (full 100vh, media left / text right)
-          ==================================================================
-          `min-h-screen` on the section + `h-full` on both grid children
-          - the media block now fills real vertical space instead of a
-          small centered aspect-ratio box. Image only (no video) here,
-          per confirmed scope - the hero is the one video moment on this
-          page. */}
-      <section className="relative min-h-screen grid sm:grid-cols-2 items-stretch">
-        <motion.div className="relative order-2 sm:order-1 h-full min-h-[50vh]" {...revealProps(reduce, fadeInLeft)}>
-          {/* No text is overlaid on this image (the description sits
-              beside it, not on top), so the contrast scrim is unneeded -
-              "none" keeps this as a purely decorative photo. */}
-          <CinematicImage src={getEventImage(event.name)} alt={event.name} accent="crimson" zoomOnHover={false} scrim="none" />
-        </motion.div>
-        <motion.div
-          className="relative z-10 order-1 sm:order-2 flex flex-col justify-center px-8 sm:px-16 py-16"
-          {...revealProps(reduce, fadeInRight)}
-        >
-          <p className="text-arc text-[11px] tracking-cinematic uppercase mb-4">The Event</p>
-          <p className="text-offwhite/70 text-base sm:text-lg leading-relaxed max-w-lg">{event.description}</p>
-          <div className="mt-8 space-y-1.5 text-sm text-offwhite/50">
-            <p>{formatTime(event.startTime)} &mdash; {formatTime(event.endTime)}</p>
-            <p>{event.venue || "Venue TBA"}</p>
-            {event.isTeamEvent && <p>Team event</p>}
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ==================================================================
-          SECTION 4 - RULES & FORMAT (full 100vh, alignment FLIPPED: text
-          left / media right, so the rhythm alternates against Section 3)
-          ================================================================== */}
-      <section id="rules" className="relative min-h-screen grid sm:grid-cols-2 items-stretch border-t border-crimson/10">
-        <motion.div
-          className="relative z-10 flex flex-col justify-center px-8 sm:px-16 py-16"
-          {...revealProps(reduce, fadeInLeft)}
-        >
-          <p className="text-arc text-[11px] tracking-cinematic uppercase mb-4">Rules &amp; Format</p>
-          <p className="text-offwhite/70 text-base sm:text-lg leading-relaxed whitespace-pre-line max-w-lg">
-            {event.rulebook || "Full rules will be shared closer to the event date."}
-          </p>
-        </motion.div>
-        <motion.div className="relative h-full min-h-[50vh]" {...revealProps(reduce, fadeInRight)}>
-          {/* Same as Section 3 - decorative only, no overlaid text. */}
-          <CinematicImage src={getEventImage(event.name)} alt={event.name} accent="arc" zoomOnHover={false} scrim="none" />
-        </motion.div>
-      </section>
-
-      {/* ==================================================================
-          SECTION 5 - REGISTER (full 100vh, centered)
-          ==================================================================
-          Same data/logic as before (handleRegister, cart add, disabled-
-          when-full) - just given the full viewport to breathe instead
-          of a compact `py-24` block, with larger price/CTA typography. */}
-      <motion.section
-        id="register"
-        className="relative min-h-screen flex items-center justify-center px-6 text-center border-t border-crimson/10"
-        {...revealProps(reduce, fadeUp)}
-      >
-        <div className="max-w-2xl">
-          <p className="text-arc text-[11px] tracking-cinematic uppercase mb-6">Register</p>
-          <p className="font-serif text-5xl sm:text-6xl text-offwhite mb-4">&#8377;{event.fee}</p>
-          <p className="text-offwhite/50 text-sm sm:text-base mb-14">
-            {event.seatsAvailable} of {event.maxSeats} seats remaining
-          </p>
-          <Button
-            size="lg"
-            disabled={full}
-            onClick={handleRegister}
-            data-log="event-detail-register"
+          <motion.p
+            variants={fadeUp}
+            className="font-serif text-2xl sm:text-4xl lg:text-5xl text-offwhite/90 leading-relaxed"
           >
-            {full ? "Seats Full" : inCart ? "Continue to Registration" : "Register for This Event"}
-          </Button>
-        </div>
-      </motion.section>
+            {statement}
+          </motion.p>
+        </motion.div>
+      </section>
+
+      {/* ==================================================================
+          SECTIONS 3-5 - THE EVENT / RULES & FORMAT / REGISTER
+          ==================================================================
+          Replaced the three separate whileInView-fade sections with one
+          reusable scroll-feature component (ported from a 21st.dev
+          "parallax scroll feature section" demo - see
+          EventScrollFeatureSection.jsx's own header comment for the full
+          adaptation notes). Same three panels, same alternating layout,
+          same underlying event data (description/rulebook/fee/seats) -
+          the difference is each panel's OWN scroll progress now drives
+          an opacity+clip-path reveal + slight parallax translate,
+          instead of a single viewport-enter fade. `id="rules"` /
+          `id="register"` are passed through so the sub-nav's existing
+          tab-jump + the `scroll-margin-top` CSS rule scoped to those
+          exact ids (index.css) keep working unchanged. */}
+      <EventScrollFeatureSection
+        event={event}
+        inCart={inCart}
+        full={full}
+        onRegister={handleRegister}
+      />
 
       {/* ==================================================================
           SECTION 6 - CONTINUE YOUR JOURNEY (full-width, NOT 100vh -
@@ -423,10 +455,30 @@ export default function EventDetail() {
                   className="group relative aspect-[3/4] rounded-lg overflow-hidden block"
                   data-log={`continue-journey-${e.id}`}
                 >
-                  {/* CinematicImage's own `zoomOnHover` already gives the
-                      scale + brightness lift the brief asks for - no
-                      extra hover wiring needed here. */}
-                  <CinematicImage src={getEventImage(e.name)} alt={e.name} accent="crimson" />
+                  {/* ROOT-CAUSE FIX ("Other Events to Explore" cards
+                      never picked up the custom icon set, unlike the
+                      main Events page carousel): this card was still
+                      calling `CinematicImage` with ONLY the stock/Picsum
+                      photo (`getEventImage`) - the icon-first resolution
+                      logic added for the main Events carousel
+                      (EventsCoverFlow.jsx) never got wired in here, so
+                      the two places silently drifted out of sync.
+                      Switched to the SAME shared `EventCardImage`
+                      component EventsCoverFlow now also uses (see that
+                      component's own header comment) - one place this
+                      icon-vs-photo decision lives, used by both. Same
+                      `getEventIconSrc()` call, same fallback-to-photo
+                      behavior for any event whose icon isn't mapped yet.
+                      `group-hover:scale-[1.02]`/`brightness-110` replace
+                      CinematicImage's own built-in `zoomOnHover` (which
+                      this component doesn't have) so the existing hover
+                      lift on this card isn't lost. */}
+                  <EventCardImage
+                    iconSrc={getEventIconSrc(e)}
+                    photoSrc={getEventImage(e.name)}
+                    alt={e.name}
+                    className="transition-transform duration-[400ms] ease-out group-hover:scale-[1.02] group-hover:brightness-110"
+                  />
                   <div className="relative z-10 h-full flex flex-col items-start justify-end p-6">
                     <h3 className="font-serif text-lg sm:text-xl text-offwhite mb-2">{e.name}</h3>
                     <span className="text-[10px] tracking-cinematic uppercase text-arc opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -439,6 +491,7 @@ export default function EventDetail() {
           </motion.div>
         </section>
       )}
+      </div>
     </div>
   );
 }

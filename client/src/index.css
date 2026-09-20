@@ -385,17 +385,29 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Transparent-over-hero navbar that solidifies once the page scrolls
    past the hero (toggled via a `.nav-scrolled` class from JS, not CSS
-   alone, since "has the user scrolled" isn't expressible in pure CSS). */
+   alone, since "has the user scrolled" isn't expressible in pure CSS).
+   ROOT-CAUSE FIX ("top bar looks opaque over the Event Detail hero video,
+   unlike the sub-nav right below it"): this used to be a FLAT, uniform
+   `rgba(13,3,3,0.3)` fill across the header's entire height, paired with
+   a heavy `blur(16px)`. A flat tint + heavy blur over a moving video
+   reads as a solid dark bar even at 30% opacity - visually very
+   different from the event sub-nav directly beneath it (EventDetail.jsx,
+   `.event-subnav`), which was already using a GRADIENT that eases to
+   `transparent` rather than a flat fill. Switched to the same
+   gradient-to-transparent approach here so both bars read consistently
+   see-through over hero video/imagery, matching what the sub-nav already
+   does - not a new pattern, just applying the existing one uniformly. */
 .nav-cinematic {
-  /* Always transparent with blur - Rolls-Royce style */
-  background: rgba(13, 3, 3, 0.3);
-  backdrop-filter: blur(16px);
+  background: linear-gradient(to bottom, rgba(13, 3, 3, 0.4), transparent);
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transition: background-color 0.5s ease, border-color 0.5s ease, backdrop-filter 0.5s ease;
 }
 .nav-cinematic.nav-scrolled {
-  /* Slightly more solid when scrolled, but still transparent */
-  background: rgba(13, 3, 3, 0.5);
+  /* Once scrolled past the hero there's no video for a gradient to
+     "ease into" - a near-solid bar here is intentional, matching
+     `.event-subnav.sub-nav-scrolled`'s own near-solid scrolled state. */
+  background: rgba(13, 3, 3, 0.85);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -420,6 +432,18 @@ h1, h2, h3, h4, h5, h6 {
   height: 2.75rem; /* 44px - compressed */
   background: rgba(0, 0, 0, 0.75) !important;
   backdrop-filter: blur(24px);
+}
+
+/* Event Detail - flat solid background for every section BELOW the
+   full-screen video Hero (Sections 2-6). Reuses the existing
+   `--color-bg-base` token (= tailwind `void`, #0D0303 - already used on
+   the Login page, footer, and card footers) rather than inventing a new
+   color. This page also skips mounting the shared CinematicBackground
+   entirely (see App.jsx's `isEventDetail` route check), so this flat
+   fill is the ONLY thing behind these sections - no ambient video, no
+   gradient tied to that component, nothing bleeding through. */
+.event-detail-solid-bg {
+  background: var(--color-bg-base);
 }
 @media (prefers-reduced-motion: reduce) {
   /* State still changes (height/background), just without the

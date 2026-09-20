@@ -4,7 +4,7 @@ import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 import Modal from "../../components/ui/Modal";
-import { Input, Textarea } from "../../components/ui/Input";
+import { Input, Textarea, Select } from "../../components/ui/Input";
 import { api } from "../../lib/api";
 
 export default function RegistrationTeamPortal() {
@@ -16,6 +16,19 @@ export default function RegistrationTeamPortal() {
 
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupResults, setLookupResults] = useState([]);
+
+  // Excel export states
+  const [events, setEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState("");
+  const [exporting, setExporting] = useState(false);
+
+  // Load events for export dropdown
+  useEffect(() => {
+    api
+      .get("/api/events")
+      .then((data) => setEvents(data.events || []))
+      .catch((err) => console.error("Failed to load events:", err));
+  }, []);
 
   const load = () => {
     setLoading(true);
@@ -62,6 +75,52 @@ export default function RegistrationTeamPortal() {
     }
   };
 
+  const exportEventParticipants = async () => {
+    if (!selectedEvent) {
+      toast.error("Please select an event");
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const token = localStorage.getItem("techastra_token");
+      const response = await fetch(
+        `${api.baseUrl}/api/registration-team/export/${selectedEvent}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Export failed");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      
+      // Get event name for filename
+      const event = events.find((e) => e.id === selectedEvent);
+      const eventName = event ? event.name.replace(/[^a-z0-9]/gi, "-") : "event";
+      a.download = `${eventName}-participants-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Excel file exported successfully");
+    } catch (err) {
+      toast.error(err.message || "Failed to export Excel file");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
       <h1 className="font-heading text-3xl font-bold mb-6">Registration Team Portal</h1>
@@ -86,6 +145,33 @@ export default function RegistrationTeamPortal() {
             ))}
           </div>
         )}
+      </Card>
+
+      <Card className="mb-8">
+        <h2 className="font-heading font-semibold mb-3">Export Event Participants</h2>
+        <p className="text-sm text-white/60 mb-4">
+          Download Excel file with all participants for a specific event (name, email, phone, college, team details, status, transaction info)
+        </p>
+        <div className="flex gap-3">
+          <Select
+            value={selectedEvent}
+            onChange={(e) => setSelectedEvent(e.target.value)}
+            className="flex-1"
+          >
+            <option value="">Select Event</option>
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.name}
+              </option>
+            ))}
+          </Select>
+          <Button
+            onClick={exportEventParticipants}
+            disabled={!selectedEvent || exporting}
+          >
+            {exporting ? "Exporting..." : "Export Excel"}
+          </Button>
+        </div>
       </Card>
 
       <div className="flex gap-3 mb-6">

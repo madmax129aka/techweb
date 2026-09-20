@@ -20,9 +20,9 @@ const VARIANTS = {
 };
 
 const SIZES = {
-  sm: "px-3 py-1.5 text-sm",
-  md: "px-5 py-2.5 text-sm",
-  lg: "px-8 py-4 text-base tracking-wide",
+  sm: "px-3 py-2.5 text-sm min-h-[44px]",
+  md: "px-5 py-3 text-sm min-h-[44px]",
+  lg: "px-8 py-4 text-base tracking-wide min-h-[48px]",
 };
 
 export default function Button({
@@ -32,6 +32,16 @@ export default function Button({
   className = "",
   disabled = false,
   type = "button",
+  // `plain`: opts a single button instance OUT of the hover
+  // scale/lift + primary-variant shimmer sweep, without touching the
+  // shared defaults every other Button on the site still uses. Added
+  // for the Event Detail Register CTA specifically - inside that
+  // section's scroll-reveal wrapper (opacity/clip-path/translate all
+  // already animating in as the panel scrolls into view), the
+  // button's OWN extra hover-scale + shimmer read as a second,
+  // competing animation layered on top and looked off / "weird" per
+  // direct feedback - not a site-wide styling complaint.
+  plain = false,
   ...props
 }) {
   const isLink = variant === "link";
@@ -42,7 +52,7 @@ export default function Button({
   // motion, not the element" convention). The link variant is an
   // understated text CTA that already animates its own underline in CSS,
   // so it's left with just a light tap response.
-  const interactive = !disabled && !reduce;
+  const interactive = !disabled && !reduce && !plain;
   const motionFeedback = interactive
     ? {
         whileHover: isLink ? { x: 2 } : { scale: 1.03, y: -1 },
@@ -63,7 +73,7 @@ export default function Button({
       `}
       {...props}
     >
-      {variant === "primary" && !disabled && (
+      {variant === "primary" && !disabled && !plain && (
         <span
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/40 to-transparent w-1/3"

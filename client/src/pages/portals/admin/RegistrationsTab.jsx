@@ -11,6 +11,7 @@ const STATUSES = ["pending", "approved", "rejected"];
 export default function RegistrationsTab() {
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -22,6 +23,39 @@ export default function RegistrationsTab() {
   };
 
   useEffect(load, []);
+
+  const exportCSV = async () => {
+    setExporting(true);
+    try {
+      const token = localStorage.getItem("techastra_token");
+      const response = await fetch(`${api.baseUrl}/api/admin/export/registrations.csv`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Export failed");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `registrations-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("CSV exported successfully");
+    } catch (err) {
+      toast.error(err.message || "Failed to export CSV");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const override = async (id, status) => {
     try {
@@ -57,9 +91,14 @@ export default function RegistrationsTab() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-heading text-xl font-semibold">All Registrations (Full Override)</h2>
-        <a href={`${api.baseUrl}/api/admin/export/registrations.csv`} target="_blank" rel="noreferrer">
-          <Button variant="outline" size="sm">Export CSV</Button>
-        </a>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={exportCSV}
+          disabled={exporting}
+        >
+          {exporting ? "Exporting..." : "Export CSV"}
+        </Button>
       </div>
 
       {loading ? (

@@ -65,6 +65,51 @@ router.get("/analytics", async (req, res) => {
   }
 });
 
+/** GET /api/admin/analytics/timeseries - daily registration counts and revenue for interactive chart */
+router.get("/analytics/timeseries", async (req, res) => {
+  try {
+    const registrations = await prisma.registration.findMany({
+      orderBy: { createdAt: "asc" },
+    });
+
+    // Group by date and status
+    const dailyData = {};
+
+    for (const reg of registrations) {
+      const date = reg.createdAt.toISOString().slice(0, 10);
+      
+      if (!dailyData[date]) {
+        dailyData[date] = {
+          date,
+          totalRegistrations: 0,
+          approved: 0,
+          pending: 0,
+          rejected: 0,
+          revenue: 0,
+        };
+      }
+
+      dailyData[date].totalRegistrations += 1;
+      dailyData[date][reg.status] = (dailyData[date][reg.status] || 0) + 1;
+
+      // Add revenue only for approved registrations
+      if (reg.status === "approved") {
+        dailyData[date].revenue += reg.totalAmount;
+      }
+    }
+
+    // Convert to array and sort by date
+    const timeseriesData = Object.values(dailyData).sort((a, b) => 
+      a.date.localeCompare(b.date)
+    );
+
+    res.json(timeseriesData);
+  } catch (err) {
+    console.error("Timeseries analytics error:", err);
+    res.status(500).json({ error: "Failed to load timeseries data" });
+  }
+});
+
 /** GET /api/admin/accounts - list all non-participant staff accounts. */
 router.get("/accounts", async (req, res) => {
   try {
@@ -142,13 +187,26 @@ router.delete("/accounts/:id", async (req, res) => {
 router.get("/export/registrations.csv", async (req, res) => {
   try {
     const registrations = await prisma.registration.findMany({ include: { user: true } });
+    
+    // Collect all unique event IDs from all registrations
+    const allEventIds = [...new Set(registrations.flatMap((r) => r.eventIds || []))];
+    
+    // Fetch all events at once
+    const events = await prisma.event.findMany({
+      where: { id: { in: allEventIds } },
+      select: { id: true, name: true },
+    });
+    
+    // Create a map for quick lookup: eventId -> eventName
+    const eventMap = new Map(events.map((e) => [e.id, e.name]));
+    
     const csv = toCsv(registrations, [
       { label: "Registration Code", value: "registrationCode" },
       { label: "Name", value: (r) => r.user.name },
       { label: "Email", value: (r) => r.user.email },
       { label: "College", value: "collegeName" },
       { label: "Team Name", value: "teamName" },
-      { label: "Events", value: (r) => r.eventIds.join("|") },
+      { label: "Events", value: (r) => (r.eventIds || []).map((id) => eventMap.get(id) || id).join(" | ") },
       { label: "Total Amount", value: "totalAmount" },
       { label: "Transaction ID", value: "transactionId" },
       { label: "Status", value: "status" },

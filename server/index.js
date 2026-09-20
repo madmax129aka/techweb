@@ -11,6 +11,7 @@ const requestLogger = require("./middleware/requestLogger");
 const authRoutes = require("./routes/auth");
 const eventRoutes = require("./routes/events");
 const registrationRoutes = require("./routes/registrations");
+const registrationTeamRoutes = require("./routes/registration-team");
 const attendanceRoutes = require("./routes/attendance");
 const foodRoutes = require("./routes/food");
 const resultRoutes = require("./routes/results");
@@ -68,6 +69,7 @@ app.get("/api/health", (req, res) => res.json({ status: "ok", time: new Date().t
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/registrations", registrationRoutes);
+app.use("/api/registration-team", registrationTeamRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/food", foodRoutes);
 app.use("/api/results", resultRoutes);

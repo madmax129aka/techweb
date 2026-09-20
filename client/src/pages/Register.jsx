@@ -138,10 +138,10 @@ export default function Register() {
                 <p className="text-xs text-offwhite/50 mb-2 uppercase tracking-wide">Team Members</p>
                 <div className="space-y-3">
                   {members.map((m, idx) => (
-                    <div key={idx} className="flex gap-3 items-end">
+                    <div key={idx} className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
                       <Input placeholder="Name" value={m.name} onChange={(e) => updateMember(idx, "name", e.target.value)} />
                       <Input placeholder="Register No." value={m.regNo} onChange={(e) => updateMember(idx, "regNo", e.target.value)} />
-                      <button type="button" className="text-danger text-xs px-2" onClick={() => removeMember(idx)}>
+                      <button type="button" className="text-danger text-xs px-2 sm:shrink-0" onClick={() => removeMember(idx)}>
                         Remove
                       </button>
                     </div>
