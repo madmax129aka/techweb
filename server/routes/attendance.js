@@ -1,0 +1,140 @@
+const express = require("express");
+const prisma = require("../db");
+const { requireAuth, requireRole } = require("../middleware/auth");
+const { scanLimiter } = require("../middleware/rateLimiter");
+const { logSuspiciousActivity, logSecurityEvent } = require("../middleware/securityLogger");
+const { validateQRScanData } = require("../middleware/inputValidation");
+
+const router = express.Router();
+
+/**
+ * POST /api/attendance/scan
+ * Coordinator scans a participant's registration QR (registrationCode) at
+ * their assigned event. Blocks duplicate check-ins for the same event.
+ * Rate limited: 30 scans per minute per coordinator to prevent abuse.
+ */
+router.post(
+  "/scan",
+  requireAuth,
+  requireRole("coordinator", "master_admin"),
+  validateQRScanData,
+  scanLimiter,
+  async (req, res) => {
+  try {
+    const { registrationCode, eventId } = req.body;
+    
+    // Input is already validated by validateQRScanData middleware
+
+    // Coordinators may only scan for their assigned event (admin can scan for any).
+    if (req.user.role === "coordinator" && req.user.assignedEventId !== eventId) {
+      logSuspiciousActivity(req, "coordinator_scanning_wrong_event", {
+        coordinatorId: req.user.id,
+        assignedEventId: req.user.assignedEventId,
+        attemptedEventId: eventId,
+      });
+      return res.status(403).json({ error: "You are not assigned to this event" });
+    }
+
+    const registration = await prisma.registration.findUnique({
+      where: { registrationCode },
+      include: { user: true },
+    });
+
+    if (!registration) {
+      return res.status(404).json({ error: "No registration found for this QR code" });
+    }
+    if (registration.status !== "approved") {
+      return res.status(409).json({ error: "This registration is not approved" });
+    }
+    if (!registration.eventIds.includes(eventId)) {
+      return res.status(409).json({ error: `${registration.user.name} is not registered for this event` });
+    }
+
+    const existing = await prisma.attendance.findUnique({
+      where: { registrationId_eventId: { registrationId: registration.id, eventId } },
+    });
+    if (existing) {
+      return res.status(409).json({
+        error: `${registration.user.name} has already been checked in`,
+        alreadyScanned: true,
+        scannedAt: existing.scannedAt,
+      });
+    }
+
+    const attendance = await prisma.attendance.create({
+      data: { registrationId: registration.id, eventId, scannedBy: req.user.id },
+    });
+
+    res.status(201).json({
+      attendance,
+      participant: { name: registration.user.name, college: registration.collegeName, code: registration.registrationCode },
+    });
+  } catch (err) {
+    console.error("Attendance scan error:", err);
+    res.status(500).json({ error: "Failed to record attendance" });
+  }
+});
+
+/** GET /api/attendance/event/:eventId - present/absent roster for coordinators. */
+router.get(
+  "/event/:eventId",
+  requireAuth,
+  requireRole("coordinator", "master_admin"),
+  async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      if (req.user.role === "coordinator" && req.user.assignedEventId !== eventId) {
+        return res.status(403).json({ error: "You are not assigned to this event" });
+      }
+
+      const registrations = await prisma.registration.findMany({
+        where: { status: "approved", eventIds: { has: eventId } },
+        include: { user: true },
+      });
+
+      const attendanceRecords = await prisma.attendance.findMany({ where: { eventId } });
+      const attendedIds = new Set(attendanceRecords.map((a) => a.registrationId));
+
+      const roster = registrations.map((r) => ({
+        registrationId: r.id,
+        registrationCode: r.registrationCode,
+        name: r.user.name,
+        college: r.collegeName,
+        teamName: r.teamName,
+        present: attendedIds.has(r.id),
+      }));
+
+      res.json({ roster, presentCount: attendedIds.size, totalCount: registrations.length });
+    } catch (err) {
+      console.error("Roster error:", err);
+      res.status(500).json({ error: "Failed to load roster" });
+    }
+  }
+);
+
+/** POST /api/attendance/manual - manual search fallback check-in (no camera). */
+router.post("/manual", requireAuth, requireRole("coordinator", "master_admin"), async (req, res) => {
+  try {
+    const { registrationId, eventId } = req.body;
+    if (req.user.role === "coordinator" && req.user.assignedEventId !== eventId) {
+      return res.status(403).json({ error: "You are not assigned to this event" });
+    }
+
+    const existing = await prisma.attendance.findUnique({
+      where: { registrationId_eventId: { registrationId, eventId } },
+    });
+    if (existing) {
+      return res.status(409).json({ error: "Already checked in" });
+    }
+
+    const attendance = await prisma.attendance.create({
+      data: { registrationId, eventId, scannedBy: req.user.id },
+    });
+    res.status(201).json({ attendance });
+  } catch (err) {
+    console.error("Manual check-in error:", err);
+    res.status(500).json({ error: "Failed to check in participant" });
+  }
+});
+
+module.exports = router;

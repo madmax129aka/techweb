@@ -1,0 +1,746 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * SHARED THEME TOKENS - single source of truth for the app's dark
+ * red/charcoal palette. Every component must reference these (or the
+ * matching Tailwind color classes they mirror - void/surface/arc/
+ * offwhite in tailwind.config.js) instead of hardcoding its own
+ * background/text color.
+ *
+ * This exists because FullScreenMenu.jsx was found hardcoding
+ * bg-[#0F1424] - a literal navy blue with no relation to this palette
+ * at all - instead of reusing the same dark tone as the Login page and
+ * every event card. Values below are sampled EXACTLY from the existing
+ * Tailwind tokens (tailwind.config.js `colors.void`/`colors.surface`/
+ * `colors.arc`/`colors.offwhite`), not new colors invented for this
+ * fix, so introducing these variables cannot itself cause any visual
+ * drift from what the rest of the site already looks like.
+ */
+:root {
+  --color-bg-base: #0D0303;       /* = tailwind `void` - Login page, event card footers, footer bar */
+  --color-bg-elevated: #1A0505;   /* = tailwind `surface` - a lighter panel shade of the same red-black hue family */
+  --color-accent: #22D3EE;        /* = tailwind `arc` - the cyan used on "Welcome Back" / links / focus rings */
+  --color-text-primary: #F5F3F0;  /* = tailwind `offwhite` - primary body/heading text on the dark base */
+  --color-text-muted: rgba(245, 243, 240, 0.55); /* = tailwind `offwhite` at reduced opacity - secondary/de-emphasized text */
+
+  /*
+   * Standard shadcn/ui design-token set, added ONLY so the shadcn-style
+   * primitives under components/ui/button.jsx, badge.jsx, and card.jsx
+   * (the lowercase files - the ApprovalHero/liquid-metal-hero feature's
+   * own dependency, NOT this app's existing PascalCase Button/Badge/Card
+   * design system) resolve to real colors instead of rendering unstyled.
+   *
+   * The integration instructions for that feature only named two tokens
+   * explicitly (--background -> the Login page's deep charcoal-red
+   * #12080a, --foreground -> the TechAstra off-white #F5F3F0) - but the
+   * actual shadcn Button/Badge/Card boilerplate these primitives are
+   * built from also references --primary/--secondary/--muted/--accent/
+   * --destructive/--card/--popover/--border/--input/--ring. Left
+   * undefined, those would be invalid Tailwind color references that
+   * generate no CSS at all, so every one is mapped here to a hex/rgba
+   * value from TechAstra's ALREADY-EXISTING palette - nothing new was
+   * invented, this just gives the shadcn convention's variable names a
+   * home pointing at colors that already exist elsewhere in this file/
+   * tailwind.config.js.
+   *
+   * NOTE ON FORMAT: the shadcn/ui convention normally stores these as
+   * space-separated HSL triplets (e.g. "222.2 84% 4.9%") so
+   * tailwind.config.js can wrap them in hsl(var(--x)). That conversion
+   * introduces a real chance of a transcription error with no way to
+   * visually verify the result in this sandbox, so these are plain hex/
+   * rgba strings instead, referenced directly as var(--x) (no hsl()
+   * wrapper) in tailwind.config.js - functionally identical, just a
+   * more directly verifiable format here.
+   */
+  --background: #12080a;
+  --foreground: #F5F3F0;
+  --card: #1a0d0f;
+  --card-foreground: #F5F3F0;
+  --popover: #1a0d0f;
+  --popover-foreground: #F5F3F0;
+  --primary: #AA0505;
+  --primary-foreground: #F5F3F0;
+  --secondary: #1A0505;
+  --secondary-foreground: #F5F3F0;
+  --muted: #1a0d0f;
+  --muted-foreground: #b8a9a9;
+  --accent: #22D3EE;
+  --accent-foreground: #0D0303;
+  --destructive: #EF4444;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.15);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #22D3EE;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hides the native cursor in favor of the custom VisionCursor component
+   (see client/src/components/VisionCursor.jsx), but ONLY on devices that
+   actually have a mouse (pointer: fine). On touch devices there is no
+   mouse to render a custom cursor for, and VisionCursor itself never
+   mounts there either - so leaving the native cursor alone on touch
+   avoids ending up with no cursor visible at all. */
+@media (pointer: fine) {
+  * {
+    cursor: none !important;
+  }
+}
+
+/* Deep crimson-black cinematic wash - deliberately NOT a busy grid/dashboard
+   pattern. The brief calls for photography/graphics to carry the color,
+   so the base page background stays a quiet, moody gradient rather than
+   a circuit-grid SaaS texture. */
+body {
+  background-color: #0d0303;
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(170, 5, 5, 0.35), transparent 60%),
+    radial-gradient(ellipse at 100% 100%, rgba(34, 211, 238, 0.06), transparent 55%);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Space Grotesk", sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(200, 30, 58, 0.5);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Consistent visible focus ring across the app */
+:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.glass {
+  background: rgba(24, 12, 15, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(200, 30, 58, 0.18);
+}
+
+.glass-gold {
+  background: rgba(24, 12, 15, 0.7);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(217, 168, 64, 0.3);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* HUD-style corner brackets, used on "grand" cards */
+.hud-corners {
+  position: relative;
+}
+.hud-corners::before,
+.hud-corners::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: #22d3ee;
+  opacity: 0.8;
+}
+.hud-corners::before {
+  top: -1px;
+  left: -1px;
+  border-top: 2px solid;
+  border-left: 2px solid;
+}
+.hud-corners::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 2px solid;
+  border-right: 2px solid;
+}
+
+@keyframes slideInTop {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-slide-in-top {
+  animation: slideInTop 0.4s ease-out;
+}
+
+@keyframes heroFadeUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-hero {
+  animation: heroFadeUp 0.8s ease-out;
+}
+
+@keyframes scanline {
+  0% { top: 0%; }
+  100% { top: 100%; }
+}
+.animate-scanline {
+  animation: scanline 2s linear infinite;
+}
+
+@keyframes ringSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-ring-spin {
+  animation: ringSpin 6s linear infinite;
+}
+
+@keyframes goldPulse {
+  0%, 100% { filter: drop-shadow(0 0 12px rgba(242, 194, 48, 0.35)); }
+  50% { filter: drop-shadow(0 0 28px rgba(242, 194, 48, 0.65)); }
+}
+.animate-gold-pulse {
+  animation: goldPulse 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-120%) skewX(-15deg); }
+  100% { transform: translateX(220%) skewX(-15deg); }
+}
+.animate-shimmer {
+  animation: shimmer 2.6s ease-in-out infinite;
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg); }
+}
+.animate-orbit {
+  animation: orbit 14s linear infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+.animate-twinkle {
+  animation: twinkle 2.4s ease-in-out infinite;
+}
+
+/* ============================================================
+   Rich / elegant "VISION" theme additions - 3D + premium surfaces
+   ============================================================ */
+
+/* Perspective containers - Tailwind's core doesn't ship a perspective
+   utility, so these are plain CSS classes applied to 3D parents. */
+.perspective-800 { perspective: 800px; }
+.perspective-1200 { perspective: 1200px; }
+.perspective-1600 { perspective: 1600px; }
+
+.preserve-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; }
+
+/* Elegant glass surface with a subtle inner highlight, richer than .glass */
+.glass-premium {
+  background: linear-gradient(160deg, rgba(38, 15, 20, 0.78) 0%, rgba(14, 8, 10, 0.88) 100%);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(217, 168, 64, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 20px 40px -20px rgba(0, 0, 0, 0.6);
+}
+
+/* Subtle film-grain overlay for a premium, textured feel */
+.grain-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+@keyframes rotate3d {
+  from { transform: rotateY(0deg) rotateX(8deg); }
+  to { transform: rotateY(360deg) rotateX(8deg); }
+}
+.animate-rotate-3d {
+  animation: rotate3d 18s linear infinite;
+}
+
+/* Keeps a ring tilted (via the --tilt custom property, set inline per
+   ring) while continuously spinning it around the Y-axis. Because the
+   X-tilt is held constant and rotateY changes which "edge" of the ring
+   faces the viewer, this is what makes a flat circle read as a tumbling
+   3D ring that sweeps in front of / behind the sphere - the classic
+   "Saturn's rings" CSS illusion. The animation fully owns `transform`
+   here (no separate inline transform on the same element), avoiding any
+   inline-vs-animation transform conflict. */
+@keyframes ringOrbit {
+  from { transform: rotateX(var(--tilt, 70deg)) rotateY(0deg); }
+  to { transform: rotateX(var(--tilt, 70deg)) rotateY(360deg); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-16px) rotate(2deg); }
+}
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+@keyframes floatMedium {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-float-medium {
+  animation: floatMedium 4.5s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.7s ease-out both;
+}
+
+/* Elegant divider - a thin gradient rule used between sections */
+.divider-vision {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217, 168, 64, 0.5), transparent);
+}
+
+/* Tilt card wrapper - the transform itself is applied inline via JS
+   (pointer position), this just sets up the transition + will-change. */
+.tilt-card {
+  transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+  will-change: transform;
+}
+
+/* ============================================================
+   "Rolls-Royce cinematic" layout primitives
+   ============================================================ */
+
+/* A near-fullscreen section: image/gradient background, content
+   vertically centered, generous negative space. Used for the hero and
+   each full-bleed homepage section. */
+.section-cinematic {
+  position: relative;
+  min-height: 92vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Crimson-to-black vignette sitting over hero imagery so text stays
+   legible without needing an opaque panel behind it (see the
+   cinematic-overlay background-image utility in tailwind.config.js).
+   Deliberately does NOT set z-index here - custom CSS after
+   @tailwind utilities wins the cascade over Tailwind's own z-* utility
+   classes at equal specificity, so a hardcoded z-index here would
+   silently override any z-0/-z-10 classes callers add inline (exactly
+   what the Home.jsx hero carousel needs to stack slides). Callers that
+   only ever render a single static scrim (e.g. EventDetail.jsx) are
+   unaffected since normal DOM order already puts it behind subsequent
+   relative/z-10 content. */
+.cinematic-scrim {
+  position: absolute;
+  inset: 0;
+}
+
+/* Thin, uppercase, widely-spaced nav links - deliberately light-weight,
+   never bold, per the brief's typography direction. */
+.nav-link-cinematic {
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 400;
+  color: rgba(245, 243, 240, 0.85);
+  transition: color 0.3s ease, opacity 0.3s ease;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+.nav-link-cinematic:hover {
+  color: #22d3ee;
+}
+
+/* Transparent-over-hero navbar that solidifies once the page scrolls
+   past the hero (toggled via a `.nav-scrolled` class from JS, not CSS
+   alone, since "has the user scrolled" isn't expressible in pure CSS).
+   ROOT-CAUSE FIX ("top bar looks opaque over the Event Detail hero video,
+   unlike the sub-nav right below it"): this used to be a FLAT, uniform
+   `rgba(13,3,3,0.3)` fill across the header's entire height, paired with
+   a heavy `blur(16px)`. A flat tint + heavy blur over a moving video
+   reads as a solid dark bar even at 30% opacity - visually very
+   different from the event sub-nav directly beneath it (EventDetail.jsx,
+   `.event-subnav`), which was already using a GRADIENT that eases to
+   `transparent` rather than a flat fill. Switched to the same
+   gradient-to-transparent approach here so both bars read consistently
+   see-through over hero video/imagery, matching what the sub-nav already
+   does - not a new pattern, just applying the existing one uniformly. */
+.nav-cinematic {
+  background: linear-gradient(to bottom, rgba(13, 3, 3, 0.4), transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background-color 0.5s ease, border-color 0.5s ease, backdrop-filter 0.5s ease;
+}
+.nav-cinematic.nav-scrolled {
+  /* Once scrolled past the hero there's no video for a gradient to
+     "ease into" - a near-solid bar here is intentional, matching
+     `.event-subnav.sub-nav-scrolled`'s own near-solid scrolled state. */
+  background: rgba(13, 3, 3, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================================
+   EVENT DETAIL - sticky sub-nav shrink/darken on scroll
+   ============================================================
+   Same pattern as .nav-cinematic/.nav-scrolled above (a `sub-nav-
+   scrolled` class toggled by a scroll-position check in
+   EventDetail.jsx), applied to the event sub-nav bar (event name +
+   Overview|Rules|Register) instead of the main site nav. Height
+   compresses from 56px -> 44px and the background darkens from a
+   faint gradient to a near-solid dark bar, matching how the
+   Rolls-Royce reference's own model sub-nav subtly solidifies as the
+   hero scrolls out of view - it should never look visually IDENTICAL
+   throughout the scroll, per the brief. */
+.event-subnav {
+  height: 3.5rem; /* 56px, matches the main nav's h-14 */
+  transition: height 0.4s ease, background-color 0.4s ease, backdrop-filter 0.4s ease;
+}
+.event-subnav.sub-nav-scrolled {
+  height: 2.75rem; /* 44px - compressed */
+  background: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(24px);
+}
+
+/* Event Detail - flat solid background for every section BELOW the
+   full-screen video Hero (Sections 2-6). Reuses the existing
+   `--color-bg-base` token (= tailwind `void`, #0D0303 - already used on
+   the Login page, footer, and card footers) rather than inventing a new
+   color. This page also skips mounting the shared CinematicBackground
+   entirely (see App.jsx's `isEventDetail` route check), so this flat
+   fill is the ONLY thing behind these sections - no ambient video, no
+   gradient tied to that component, nothing bleeding through. */
+.event-detail-solid-bg {
+  background: var(--color-bg-base);
+}
+@media (prefers-reduced-motion: reduce) {
+  /* State still changes (height/background), just without the
+     animated transition - "remove the motion, not the element/state",
+     matching the app's existing reduced-motion convention. */
+  .event-subnav {
+    transition: none;
+  }
+}
+
+/* Anchor-scroll offset for the Event Detail page's in-page sections
+   (#overview / #rules / #register). Without this, clicking a sub-nav
+   tab scrolls the target section to the very top of the viewport -
+   which sits BEHIND the fixed main nav (56px) + sticky sub-nav (56px
+   default / 44px scrolled) = up to 112px of dead zone, clipping the
+   section's own heading. `scroll-margin-top` tells the browser's
+   native anchor-scroll (triggered by <a href="#id">, combined with the
+   already-global `html { scroll-behavior: smooth }`) to stop 112px
+   short of the true top instead of flush against it - no JS scroll
+   library needed, this is a pure CSS fix for a pure CSS mechanism. */
+#overview,
+#rules,
+#register {
+  scroll-margin-top: 7rem; /* 112px = 56px main nav + 56px sub-nav (worst case, unscrolled) */
+}
+
+/* Understated text-link CTA ("EXPLORE EVENTS" style) instead of a filled
+   button, per the reference site's restrained hero calls to action. */
+.link-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #f5f3f0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(245, 243, 240, 0.4);
+  transition: border-color 0.35s ease, color 0.35s ease, gap 0.35s ease;
+}
+.link-cta:hover {
+  color: #22d3ee;
+  border-bottom-color: #22d3ee;
+  gap: 0.9rem;
+}
+
+/* Slow, deliberate fade used for hero image/section transitions on
+   scroll - the "one signature scroll moment," not motion on everything. */
+@keyframes cinematicFade {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-cinematic-fade {
+  animation: cinematicFade 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Full-screen slide-out menu overlay, open/close.
+   Section 5G: "fade AND slight scale (e.g. scale from 0.98 to 1)
+   combined, not just opacity toggling" - both directions now animate
+   opacity + transform together (previously this was opacity-only, and
+   had no closing animation at all - the menu just vanished the instant
+   `open` went false, since the component unmounted immediately). A
+   cubic-bezier ease-out (closer to the reference site's easing than a
+   flat `ease`) is used for both, and FullScreenMenu.jsx now keeps the
+   component mounted for one extra animation-duration after close so
+   .animate-menu-fade-out actually gets to play before unmounting. */
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-menu-fade-in {
+  animation: menuFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes menuFadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.98); }
+}
+.animate-menu-fade-out {
+  animation: menuFadeOut 0.32s cubic-bezier(0.4, 0, 0.6, 1) both;
+}
+
+/* Right-panel image crossfade for the split-screen mega-menu (Section
+   5D): the <img> is re-keyed by src so React remounts it on each change,
+   and this fade-in on the fresh element - over the dark void-toned panel
+   behind it (see the theme-tokens comment near the top of this file) -
+   reads as a smooth crossfade rather than a hard swap. Kept short
+   (220ms) per the brief's "instant" feel. */
+@keyframes menuImageFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-menu-image-fade {
+  animation: menuImageFade 0.22s ease-out both;
+}
+
+/* ============================================================
+   Slide-in form panels ("forms as overlays, not pages" pattern)
+   ============================================================ */
+
+@keyframes panelBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-panel-backdrop {
+  animation: panelBackdropIn 0.4s ease both;
+}
+
+@keyframes panelSlideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.animate-panel-slide-in {
+  animation: panelSlideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ============================================================
+   FAQ accordion - plain typography, one section open at a time
+   ============================================================ */
+
+.accordion-item {
+  border-bottom: 1px solid rgba(170, 5, 5, 0.12);
+}
+
+/* Grid-rows trick: animating from 0fr -> 1fr lets the panel expand to
+   its natural content height without JS needing to measure anything
+   (a plain max-height transition would require guessing a fixed value). */
+.accordion-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  transition: grid-template-rows 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.accordion-panel.accordion-open {
+  grid-template-rows: 1fr;
+}
+.accordion-panel > div {
+  overflow: hidden;
+}
+
+
+/* ============================================================
+   Section 5C - "TechAstra Core" pure-CSS fallback animations
+   (used by TechAstraCoreStatic.jsx when animated=true - the
+   WebGL-unsupported/render-error case; prefers-reduced-motion always
+   renders with animated=false and never applies any of these)
+   ============================================================ */
+
+/* Spins the whole orbit ring (all six stones together) around the core -
+   the flat-CSS analog of the real 3D version's per-stone elliptical
+   motion; a single shared rotation is a deliberate simplification here,
+   not an attempt to reproduce six independent orbital periods in CSS. */
+@keyframes coreRingSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-core-ring-spin {
+  animation: coreRingSpin 26s linear infinite;
+}
+
+/* Counter-rotates each stone's own facet shape so it doesn't visually
+   spin in lockstep with the ring's rotation - giving each stone its own
+   independent tumble, echoing the 3D version's "each stone also spins on
+   its own axis, independent of its orbital motion" requirement. */
+@keyframes coreStoneSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+.animate-core-stone-spin {
+  animation: coreStoneSpin 6s linear infinite;
+}
+
+/* The core gem's "heartbeat/breathing" pulse - 1.0 -> 1.03 scale on a
+   slow sine-like ease, matching the 3D version's own breathing effect. */
+@keyframes coreBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.animate-core-breathe {
+  animation: coreBreathe 4s ease-in-out infinite;
+}
+
+/* The Events page's own local video hero (.events-hero*) was removed in
+   favor of ONE shared video backdrop (CinematicBackground.jsx, mounted
+   once in App.jsx) fixed behind the entire site - see .cinematic-bg-*
+   below. This keeps the treatment identical on every page instead of
+   Login and Events each rendering their own separately-tuned copy. */
+
+/* ============================================================
+   Shared site-wide cinematic video background (CinematicBackground.jsx)
+   Fixed behind literally everything (z-index -10, well below the app's
+   fixed navbar at z-50 and this file's own custom-cursor override).
+   Semi-blurred + dimmed - restrained, Rolls-Royce-style ambient motion
+   behind the content, never a sharp foreground video. Reduced motion
+   skips the <video> (see the component) and this wash's own base color
+   is the fallback, so the page never shows dead black either way.
+   ============================================================ */
+.cinematic-bg {
+  position: fixed;
+  inset: 0;
+  /* Positive (not negative) z-index deliberately - a negative z-index
+     here previously caused this exact bug on the Login page: the
+     background silently vanished behind an ancestor's own painted
+     background because of how stacking contexts resolve negative
+     indices. Positive + low, paired with `.app-shell` below explicitly
+     stacking ABOVE it, is the version that's actually been verified to
+     render correctly. */
+  z-index: 0;
+  overflow: hidden;
+  background: #0d0303; /* = tailwind `void` - fallback base, matches body */
+}
+.cinematic-bg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* The "semi blurred" look: soft, dimmed, slightly desaturated so it
+     reads as ambient texture behind the UI, not a competing clip. */
+  filter: blur(7px) brightness(0.45) saturate(1.05);
+  transform: scale(1.08); /* hides the soft edge the blur introduces */
+}
+.cinematic-bg-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(170, 5, 5, 0.22), transparent 60%),
+    radial-gradient(ellipse at 100% 100%, rgba(34, 211, 238, 0.05), transparent 55%),
+    linear-gradient(180deg, rgba(13, 3, 3, 0.55) 0%, rgba(13, 3, 3, 0.35) 40%, rgba(13, 3, 3, 0.75) 100%);
+}
+@media (max-width: 640px) {
+  .cinematic-bg-video { filter: blur(6px) brightness(0.42) saturate(1.05); }
+}
+
+/* The app's whole content tree (App.jsx's root wrapper) needs its own
+   stacking context ABOVE .cinematic-bg (z 0), otherwise normal in-flow
+   content - which has no z-index of its own - can end up painted UNDER
+   the fixed background depending on paint order.
+   
+   CRITICAL FIX: All text content was hidden because the z-index was too low.
+   Bumping to z-10 ensures content always stays above the background layer. */
+.app-shell {
+  position: relative;
+  z-index: 10;
+  /* Ensure text is always visible with proper color and no transparency issues */
+  color: var(--color-text-primary);
+}
+
+/* Utility class to ensure text is always visible with proper contrast */
+.text-visible {
+  position: relative;
+  z-index: 1;
+  color: var(--color-text-primary);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Fix for headings to ensure they're always visible */
+h1, h2, h3, h4, h5, h6 {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure all paragraph and text elements are visible */
+p, span, div, a, button, label, input, textarea {
+  position: relative;
+  z-index: 1;
+}
+
+/* Sections need proper stacking */
+section {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------------------------------------------------------------------
+   scrollbar-hide utility
+   ---------------------------------------------------------------------
+   Hides the native scrollbar on a horizontally-scrollable element while
+   still allowing scroll (mouse wheel, trackpad, arrow keys, touch drag).
+   Used by the Events landing page's snap-scroll carousel so the row of
+   event cards doesn't render a chunky OS scrollbar underneath it - the
+   left/right arrow buttons and touch drag are the visible affordances.
+
+   Kept as a plain utility rather than a Tailwind plugin (this project
+   deliberately doesn't run `tailwindcss-scrollbar-hide` - no npm plugin
+   install), so it's just a class you add to any element:
+       <div className="overflow-x-auto scrollbar-hide">...</div>
+   --------------------------------------------------------------------- */
+.scrollbar-hide {
+  /* IE / Edge (legacy) */
+  -ms-overflow-style: none;
+  /* Firefox */
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  /* Chrome / Safari / Opera / Edge (Chromium) */
+  display: none;
+  width: 0;
+  height: 0;
+}
