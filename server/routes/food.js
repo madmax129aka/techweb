@@ -1,6 +1,9 @@
 const express = require("express");
 const prisma = require("../db");
 const { requireAuth, requireRole } = require("../middleware/auth");
+const { scanLimiter } = require("../middleware/rateLimiter");
+const { logSecurityEvent } = require("../middleware/securityLogger");
+const { validateMealSessionData } = require("../middleware/inputValidation");
 
 const router = express.Router();
 const VALID_SESSIONS = ["breakfast", "lunch", "snacks"];
@@ -10,15 +13,17 @@ const VALID_SESSIONS = ["breakfast", "lunch", "snacks"];
  * Hospitality team scans a registration QR + selects a meal session.
  * Blocks duplicate collection for the same session.
  */
-router.post("/scan", requireAuth, requireRole("hospitality", "master_admin"), async (req, res) => {
+router.post(
+  "/scan",
+  requireAuth,
+  requireRole("hospitality", "master_admin"),
+  validateMealSessionData,
+  scanLimiter,
+  async (req, res) => {
   try {
     const { registrationCode, mealSession } = req.body;
-    if (!registrationCode || !mealSession) {
-      return res.status(400).json({ error: "registrationCode and mealSession are required" });
-    }
-    if (!VALID_SESSIONS.includes(mealSession)) {
-      return res.status(400).json({ error: `mealSession must be one of ${VALID_SESSIONS.join(", ")}` });
-    }
+    
+    // Input is already validated by validateMealSessionData middleware
 
     const registration = await prisma.registration.findUnique({
       where: { registrationCode },
@@ -43,6 +48,18 @@ router.post("/scan", requireAuth, requireRole("hospitality", "master_admin"), as
     const log = await prisma.foodLog.create({
       data: { registrationId: registration.id, mealSession },
     });
+
+    // Log food collection
+    logSecurityEvent(
+      "food_collection",
+      req.user.id,
+      { 
+        registrationCode, 
+        mealSession, 
+        participantName: registration.user.name 
+      },
+      req
+    );
 
     res.status(201).json({
       foodLog: log,

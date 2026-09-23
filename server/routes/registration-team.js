@@ -2,6 +2,8 @@ const express = require("express");
 const XLSX = require("xlsx");
 const prisma = require("../db");
 const { requireAuth, requireRole } = require("../middleware/auth");
+const { exportLimiter } = require("../middleware/rateLimiter");
+const { logSecurityEvent } = require("../middleware/securityLogger");
 
 const router = express.Router();
 
@@ -18,7 +20,7 @@ router.use(requireAuth, (req, res, next) => {
  * Export all participants for a specific event as Excel (.xlsx)
  * Columns: name, email, phone, college, registerNo, team name, team members, status, transactionId, totalAmount, createdAt
  */
-router.get("/export/:eventId", async (req, res) => {
+router.get("/export/:eventId", exportLimiter, async (req, res) => {
   try {
     const { eventId } = req.params;
 
@@ -133,6 +135,15 @@ router.get("/export/:eventId", async (req, res) => {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    
+    // Log export activity
+    logSecurityEvent(
+      "registration_export",
+      req.user.id,
+      { eventId, eventName: event.name, rowCount: rows.length },
+      req
+    );
+    
     res.send(excelBuffer);
   } catch (err) {
     console.error("Export event participants error:", err);

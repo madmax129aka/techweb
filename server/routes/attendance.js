@@ -1,6 +1,9 @@
 const express = require("express");
 const prisma = require("../db");
 const { requireAuth, requireRole } = require("../middleware/auth");
+const { scanLimiter } = require("../middleware/rateLimiter");
+const { logSuspiciousActivity, logSecurityEvent } = require("../middleware/securityLogger");
+const { validateQRScanData } = require("../middleware/inputValidation");
 
 const router = express.Router();
 
@@ -8,16 +11,27 @@ const router = express.Router();
  * POST /api/attendance/scan
  * Coordinator scans a participant's registration QR (registrationCode) at
  * their assigned event. Blocks duplicate check-ins for the same event.
+ * Rate limited: 30 scans per minute per coordinator to prevent abuse.
  */
-router.post("/scan", requireAuth, requireRole("coordinator", "master_admin"), async (req, res) => {
+router.post(
+  "/scan",
+  requireAuth,
+  requireRole("coordinator", "master_admin"),
+  validateQRScanData,
+  scanLimiter,
+  async (req, res) => {
   try {
     const { registrationCode, eventId } = req.body;
-    if (!registrationCode || !eventId) {
-      return res.status(400).json({ error: "registrationCode and eventId are required" });
-    }
+    
+    // Input is already validated by validateQRScanData middleware
 
     // Coordinators may only scan for their assigned event (admin can scan for any).
     if (req.user.role === "coordinator" && req.user.assignedEventId !== eventId) {
+      logSuspiciousActivity(req, "coordinator_scanning_wrong_event", {
+        coordinatorId: req.user.id,
+        assignedEventId: req.user.assignedEventId,
+        attemptedEventId: eventId,
+      });
       return res.status(403).json({ error: "You are not assigned to this event" });
     }
 

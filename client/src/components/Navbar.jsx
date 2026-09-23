@@ -106,6 +106,9 @@ export default function Navbar() {
               <Link to="/events" className="nav-link-cinematic" data-log="nav-events">
                 Events
               </Link>
+              <Link to="/register" className="nav-link-cinematic" data-log="nav-register">
+                Register
+              </Link>
               <Link to="/verify-certificate" className="nav-link-cinematic" data-log="nav-verify-certificate">
                 Verify Certificate
               </Link>

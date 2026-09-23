@@ -329,8 +329,13 @@ export default function EventDetail() {
           reads as a moody backdrop consistent with the rest of the
           site's cinematic treatment - NOT for text contrast anymore,
           since no text is overlaid on this section now (moved to
-          Section 2 below, see that section's own comment). */}
-      <section className="relative h-screen -mt-14 overflow-hidden" id="overview">
+          Section 2 below, see that section's own comment).
+          
+          BUG FIX (mobile responsiveness): Added `max-w-full` to ensure
+          the hero section never exceeds viewport width on mobile devices.
+          The combination of `overflow-hidden` + `max-w-full` prevents any
+          child elements (video/image) from causing horizontal scroll. */}
+      <section className="relative h-screen -mt-14 overflow-hidden max-w-full" id="overview">
         <EventHeroMedia
           videoSrc={heroVideoSrc}
           imageSrc={getEventImage(event.name)}

@@ -2,6 +2,8 @@ const express = require("express");
 const prisma = require("../db");
 const { requireAuth, requireRole } = require("../middleware/auth");
 const { broadcastResult } = require("../socket");
+const { apiLimiter } = require("../middleware/rateLimiter");
+const { logSecurityEvent, logIDORAttempt } = require("../middleware/securityLogger");
 
 const router = express.Router();
 
@@ -57,13 +59,22 @@ router.get("/", async (req, res) => {
  * Locks immediately - resubmitting fails unless the admin override endpoint is used.
  * Body: { eventId, winners: [{ position, registrationId }, ...] }
  */
-router.post("/", requireAuth, requireRole("coordinator", "master_admin"), async (req, res) => {
+router.post("/", requireAuth, requireRole("coordinator", "master_admin"), apiLimiter, async (req, res) => {
   try {
     const { eventId, winners } = req.body;
     if (!eventId || !Array.isArray(winners) || !winners.length) {
       return res.status(400).json({ error: "eventId and a winners array are required" });
     }
+    
+    // IDOR Prevention: Coordinators can only submit for their assigned event
     if (req.user.role === "coordinator" && req.user.assignedEventId !== eventId) {
+      logIDORAttempt(
+        req.user.id,
+        "eventId",
+        eventId,
+        req.user.assignedEventId,
+        req
+      );
       return res.status(403).json({ error: "You are not assigned to this event" });
     }
 
@@ -85,6 +96,14 @@ router.post("/", requireAuth, requireRole("coordinator", "master_admin"), async 
       )
     );
 
+    // Log result submission
+    logSecurityEvent(
+      "result_submission",
+      req.user.id,
+      { eventId, winnerCount: created.length, role: req.user.role },
+      req
+    );
+
     broadcastResult({ eventId, results: created });
     res.status(201).json({ results: created });
   } catch (err) {
@@ -97,7 +116,7 @@ router.post("/", requireAuth, requireRole("coordinator", "master_admin"), async 
  * PATCH /api/results/override - master_admin only: edit locked results for an event.
  * Body: { eventId, winners: [{ position, registrationId }, ...] }
  */
-router.patch("/override", requireAuth, requireRole("master_admin"), async (req, res) => {
+router.patch("/override", requireAuth, requireRole("master_admin"), apiLimiter, async (req, res) => {
   try {
     const { eventId, winners } = req.body;
     if (!eventId || !Array.isArray(winners) || !winners.length) {
@@ -118,6 +137,14 @@ router.patch("/override", requireAuth, requireRole("master_admin"), async (req, 
           },
         })
       )
+    );
+
+    // Log admin override
+    logSecurityEvent(
+      "result_override",
+      req.user.id,
+      { eventId, winnerCount: created.length },
+      req
     );
 
     broadcastResult({ eventId, results: created, overridden: true });

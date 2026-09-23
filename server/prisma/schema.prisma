@@ -39,6 +39,7 @@ model Event {
   description   String
   track         String?
   category      String   @default("technical") // technical | non_technical
+  day           Int?     // 1 or 2 (Day 1 or Day 2 of the symposium)
   startTime     DateTime
   endTime       DateTime
   fee           Float
@@ -79,6 +80,9 @@ model Registration {
   totalAmount       Float
   transactionId     String?  @unique
   paymentProofUrl   String?
+  paymentMethod     String   @default("upi") // upi | razorpay | cash
+  razorpayOrderId   String?  // Razorpay order ID for online payments
+  razorpayPaymentId String?  // Razorpay payment ID after successful payment
   status            String   @default("pending") // pending | approved | rejected
   rejectionReason   String?
   createdAt         DateTime @default(now())
@@ -153,4 +157,21 @@ model HelpQuery {
   message   String
   status    String   @default("open") // open | resolved
   createdAt DateTime @default(now())
+}
+
+model ComboPass {
+  id              String   @id @default(cuid())
+  name            String
+  description     String
+  eventIds        String[] // Array of Event IDs included in this combo
+  individualPrice Float    // Sum of individual event prices
+  comboPrice      Float    // Discounted combo price
+  savings         Float    // individualPrice - comboPrice
+  category        String   // "mixed" for cross-category combos
+  availableSeats  Int
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([isActive])
 }

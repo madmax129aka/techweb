@@ -9,6 +9,7 @@ import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import Cart from "./pages/Cart";
 import Register from "./pages/Register";
+import RegisterForm from "./pages/RegisterForm";
 import Checkout from "./pages/Checkout";
 import Status from "./pages/Status";
 import Login from "./pages/Login";
@@ -86,6 +87,7 @@ export default function App() {
           <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/register/form" element={<RegisterForm />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/status" element={<Status />} />
           <Route path="/login" element={<Login />} />

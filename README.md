@@ -135,6 +135,73 @@ the real schedule/fee/venue numbers are finalized.
 9. Log in as Certificate Team → generate a certificate for the participant.
 10. Visit `/verify-certificate`, enter the certificate code → confirm it validates.
 
+## Razorpay Payment Integration
+
+This app integrates Razorpay for automated online payment verification and supports cash registrations for walk-up participants.
+
+### Setup Instructions
+
+1. **Install Razorpay SDK:**
+   ```bash
+   cd server
+   npm install razorpay
+   ```
+
+2. **Get Razorpay API Keys:**
+   - Sign up at [Razorpay Dashboard](https://dashboard.razorpay.com/)
+   - Navigate to Settings → API Keys
+   - Generate Test/Live mode keys
+
+3. **Configure Environment Variables:**
+   Add to `server/.env`:
+   ```
+   RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxxx
+   RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxx
+   ```
+
+   **Security Note:** Never commit real keys to version control. The `KEY_SECRET` must remain server-side only.
+
+4. **Update Frontend Environment:**
+   The frontend automatically fetches the Key ID via the `/api/payment/config` endpoint. No client-side environment variable needed.
+
+### Payment Flows
+
+#### Online Payment (Razorpay)
+1. User adds events to cart → proceeds to checkout
+2. Frontend creates registration record (status: `pending`)
+3. Backend creates Razorpay order via `/api/payment/create-order`
+4. Razorpay checkout modal opens for payment
+5. On success, frontend submits payment details to `/api/payment/verify`
+6. Backend verifies signature using HMAC SHA256 with `KEY_SECRET`
+7. Auto-approves registration on successful verification
+8. ID card/QR generated immediately
+
+#### Cash Registration (Registration Team)
+1. Registration Team member uses "Walk-up Cash Registration" form
+2. Fills participant details, selected events, amount collected
+3. Submits form → creates registration with `paymentMethod: "cash"`
+4. Auto-approves immediately (cash verified in-person)
+5. ID card displays on screen for participant to photograph
+
+### Testing
+
+Use Razorpay Test Mode credentials:
+- Test Card: `4111 1111 1111 1111`
+- CVV: Any 3 digits
+- Expiry: Any future date
+- Name: Any name
+
+### Installation Issue Note
+
+If `npm install razorpay` fails with `UNABLE_TO_VERIFY_LEAF_SIGNATURE` certificate error, try:
+```bash
+npm config set strict-ssl false
+npm install razorpay
+npm config set strict-ssl true
+```
+
+Or download via your organization's proxy/mirror if applicable.
+
 ## Known Limitations / Next Steps
 
 - File uploads (payment screenshots, ID photos) are stored on local disk
@@ -147,3 +214,4 @@ the real schedule/fee/venue numbers are finalized.
 - Email sending requires real SMTP credentials in `.env`; without them the
   server logs the email content to the console instead (safe default for
   local development).
+- **Razorpay package installation:** The `razorpay` npm package must be installed manually before deployment (`npm install razorpay` in `server/`). Payment routes will return 503 until this package is available.

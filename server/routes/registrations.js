@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const prisma = require("../db");
 const { requireAuth, requireRole } = require("../middleware/auth");
 const { upload } = require("../middleware/upload");
+const { registrationLimiter, exportLimiter } = require("../middleware/rateLimiter");
+const { logIDORAttempt, logSuspiciousActivity } = require("../middleware/securityLogger");
 const { generateRegistrationCode } = require("../utils/codes");
 const { sendMail } = require("../utils/mailer");
 
@@ -19,8 +21,9 @@ function rangesOverlap(aStart, aEnd, bStart, bEnd) {
  * User record (lead, for team events). Also validates:
  *  - no time-clash between the chosen events
  *  - seat availability
+ * Rate limited: 3 registrations per hour per IP to prevent spam.
  */
-router.post("/", upload.single("paymentProof"), async (req, res) => {
+router.post("/", registrationLimiter, upload.single("paymentProof"), async (req, res) => {
   try {
     const body = req.body;
     const eventIds = JSON.parse(body.eventIds || "[]");
@@ -225,6 +228,8 @@ router.get("/:id", requireAuth, async (req, res) => {
     const isOwner = req.user.id === registration.userId;
     const isStaff = ["registration_team", "master_admin"].includes(req.user.role);
     if (!isOwner && !isStaff) {
+      // Log IDOR attempt - user trying to access someone else's registration
+      logIDORAttempt(req, "registration", req.params.id, registration.userId);
       return res.status(403).json({ error: "Not authorized to view this registration" });
     }
 

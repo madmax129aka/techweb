@@ -4,8 +4,9 @@ import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 import Modal from "../../components/ui/Modal";
-import { Input, Textarea, Select } from "../../components/ui/Input";
+import { Input, Textarea, Select, Label } from "../../components/ui/Input";
 import { api } from "../../lib/api";
+import IdCard from "../../components/IdCard";
 
 export default function RegistrationTeamPortal() {
   const [registrations, setRegistrations] = useState([]);
@@ -21,6 +22,24 @@ export default function RegistrationTeamPortal() {
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState("");
   const [exporting, setExporting] = useState(false);
+
+  // Cash registration states
+  const [showCashForm, setShowCashForm] = useState(false);
+  const [cashRegistration, setCashRegistration] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    collegeName: "",
+    registerNo: "",
+    password: "TechAstra@2026", // Default password for walk-up registrations
+    eventIds: [],
+    isTeam: false,
+    teamName: "",
+    teamMembers: [],
+    amountCollected: 0,
+  });
+  const [createdRegistration, setCreatedRegistration] = useState(null);
+  const [creatingCash, setCreatingCash] = useState(false);
 
   // Load events for export dropdown
   useEffect(() => {
@@ -121,9 +140,359 @@ export default function RegistrationTeamPortal() {
     }
   };
 
+  const submitCashRegistration = async (e) => {
+    e.preventDefault();
+    
+    // Validation
+    if (!cashRegistration.name || !cashRegistration.email || !cashRegistration.phone) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
+    if (cashRegistration.eventIds.length === 0) {
+      toast.error("Please select at least one event");
+      return;
+    }
+    
+    if (cashRegistration.amountCollected <= 0) {
+      toast.error("Please enter the amount collected");
+      return;
+    }
+
+    if (cashRegistration.isTeam && (!cashRegistration.teamName || cashRegistration.teamMembers.length === 0)) {
+      toast.error("Please add team name and at least one team member");
+      return;
+    }
+
+    setCreatingCash(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("name", cashRegistration.name);
+      formData.append("email", cashRegistration.email);
+      formData.append("phone", cashRegistration.phone);
+      formData.append("password", cashRegistration.password);
+      formData.append("collegeName", cashRegistration.collegeName || "");
+      formData.append("registerNo", cashRegistration.registerNo || "");
+      formData.append("eventIds", JSON.stringify(cashRegistration.eventIds));
+      formData.append("paymentMethod", "cash");
+      formData.append("transactionId", `CASH-${Date.now()}`); // Unique cash transaction ID
+      
+      if (cashRegistration.isTeam) {
+        formData.append("teamName", cashRegistration.teamName);
+        const teamMembersWithLead = [
+          { name: cashRegistration.name, regNo: cashRegistration.registerNo, role: "lead" },
+          ...cashRegistration.teamMembers
+        ];
+        formData.append("teamMembers", JSON.stringify(teamMembersWithLead));
+      }
+
+      const data = await api.post("/api/registrations", formData, { isFormData: true });
+
+      // Auto-approve the registration since cash was collected
+      await api.patch(`/api/registrations/${data.registration.id}/approve`);
+
+      // Fetch the approved registration with user details
+      const approvedReg = await api.get(`/api/registrations/${data.registration.id}`);
+      
+      setCreatedRegistration(approvedReg.registration);
+      toast.success(`Cash registration created! Code: ${data.registration.registrationCode}`);
+      
+      // Reset form
+      setCashRegistration({
+        name: "",
+        email: "",
+        phone: "",
+        collegeName: "",
+        registerNo: "",
+        password: "TechAstra@2026",
+        eventIds: [],
+        isTeam: false,
+        teamName: "",
+        teamMembers: [],
+        amountCollected: 0,
+      });
+      
+      // Refresh registration list
+      load();
+    } catch (err) {
+      toast.error(err.message || "Failed to create cash registration");
+    } finally {
+      setCreatingCash(false);
+    }
+  };
+
+  const addTeamMember = () => {
+    setCashRegistration({
+      ...cashRegistration,
+      teamMembers: [...cashRegistration.teamMembers, { name: "", regNo: "", role: "member" }],
+    });
+  };
+
+  const removeTeamMember = (index) => {
+    setCashRegistration({
+      ...cashRegistration,
+      teamMembers: cashRegistration.teamMembers.filter((_, i) => i !== index),
+    });
+  };
+
+  const updateTeamMember = (index, field, value) => {
+    const updated = [...cashRegistration.teamMembers];
+    updated[index][field] = value;
+    setCashRegistration({ ...cashRegistration, teamMembers: updated });
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
       <h1 className="font-heading text-3xl font-bold mb-6">Registration Team Portal</h1>
+
+      {/* Cash Registration Section */}
+      <Card className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="font-heading font-semibold text-xl mb-1">Walk-up Cash Registration</h2>
+            <p className="text-sm text-white/60">Register participants who pay cash in person</p>
+          </div>
+          <Button onClick={() => setShowCashForm(!showCashForm)}>
+            {showCashForm ? "Cancel" : "New Cash Registration"}
+          </Button>
+        </div>
+
+        {showCashForm && (
+          <form onSubmit={submitCashRegistration} className="mt-6 space-y-6">
+            {/* Personal Information */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg border-b border-white/10 pb-2">Personal Information</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="cash-name">Full Name *</Label>
+                  <Input
+                    id="cash-name"
+                    required
+                    value={cashRegistration.name}
+                    onChange={(e) => setCashRegistration({ ...cashRegistration, name: e.target.value })}
+                    placeholder="Participant name"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="cash-email">Email *</Label>
+                  <Input
+                    id="cash-email"
+                    type="email"
+                    required
+                    value={cashRegistration.email}
+                    onChange={(e) => setCashRegistration({ ...cashRegistration, email: e.target.value })}
+                    placeholder="participant@example.com"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="cash-phone">Phone Number *</Label>
+                  <Input
+                    id="cash-phone"
+                    type="tel"
+                    required
+                    value={cashRegistration.phone}
+                    onChange={(e) => setCashRegistration({ ...cashRegistration, phone: e.target.value })}
+                    placeholder="1234567890"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="cash-college">College/Institution</Label>
+                  <Input
+                    id="cash-college"
+                    value={cashRegistration.collegeName}
+                    onChange={(e) => setCashRegistration({ ...cashRegistration, collegeName: e.target.value })}
+                    placeholder="College name (optional)"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="cash-regno">Register Number</Label>
+                  <Input
+                    id="cash-regno"
+                    value={cashRegistration.registerNo}
+                    onChange={(e) => setCashRegistration({ ...cashRegistration, registerNo: e.target.value })}
+                    placeholder="Student register number (optional)"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="cash-amount">Amount Collected (₹) *</Label>
+                  <Input
+                    id="cash-amount"
+                    type="number"
+                    required
+                    min="0"
+                    value={cashRegistration.amountCollected}
+                    onChange={(e) => setCashRegistration({ ...cashRegistration, amountCollected: parseFloat(e.target.value) || 0 })}
+                    placeholder="Amount paid in cash"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Event Selection */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg border-b border-white/10 pb-2">Event Selection *</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {events.map((event) => (
+                  <label
+                    key={event.id}
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                      cashRegistration.eventIds.includes(event.id)
+                        ? "border-cyan bg-cyan/10"
+                        : "border-white/10 bg-white/5 hover:border-white/20"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={cashRegistration.eventIds.includes(event.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setCashRegistration({
+                            ...cashRegistration,
+                            eventIds: [...cashRegistration.eventIds, event.id],
+                          });
+                        } else {
+                          setCashRegistration({
+                            ...cashRegistration,
+                            eventIds: cashRegistration.eventIds.filter((id) => id !== event.id),
+                          });
+                        }
+                      }}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm">{event.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Team Registration Toggle */}
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cashRegistration.isTeam}
+                  onChange={(e) =>
+                    setCashRegistration({ ...cashRegistration, isTeam: e.target.checked })
+                  }
+                  className="w-5 h-5"
+                />
+                <span className="font-semibold">This is a team registration</span>
+              </label>
+
+              {cashRegistration.isTeam && (
+                <div className="space-y-4 pl-8">
+                  <div>
+                    <Label htmlFor="team-name">Team Name *</Label>
+                    <Input
+                      id="team-name"
+                      required={cashRegistration.isTeam}
+                      value={cashRegistration.teamName}
+                      onChange={(e) =>
+                        setCashRegistration({ ...cashRegistration, teamName: e.target.value })
+                      }
+                      placeholder="Enter team name"
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Team Members (excluding lead)</Label>
+                      <Button type="button" size="sm" onClick={addTeamMember}>
+                        + Add Member
+                      </Button>
+                    </div>
+
+                    {cashRegistration.teamMembers.map((member, index) => (
+                      <div
+                        key={index}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-white/5 rounded-lg"
+                      >
+                        <Input
+                          placeholder="Member name"
+                          value={member.name}
+                          onChange={(e) => updateTeamMember(index, "name", e.target.value)}
+                          required={cashRegistration.isTeam}
+                        />
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Register number"
+                            value={member.regNo}
+                            onChange={(e) => updateTeamMember(index, "regNo", e.target.value)}
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="danger"
+                            onClick={() => removeTeamMember(index)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex gap-3 pt-4 border-t border-white/10">
+              <Button type="submit" disabled={creatingCash} className="flex-1">
+                {creatingCash ? "Creating Registration..." : "Create & Approve Registration"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setShowCashForm(false);
+                  setCashRegistration({
+                    name: "",
+                    email: "",
+                    phone: "",
+                    collegeName: "",
+                    registerNo: "",
+                    password: "TechAstra@2026",
+                    eventIds: [],
+                    isTeam: false,
+                    teamName: "",
+                    teamMembers: [],
+                    amountCollected: 0,
+                  });
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {/* Display created registration with ID card */}
+        {createdRegistration && (
+          <div className="mt-6 p-6 bg-white/5 rounded-lg">
+            <h3 className="font-semibold text-lg mb-4 text-center">✓ Registration Created Successfully!</h3>
+            <div className="max-w-md mx-auto">
+              <IdCard registration={createdRegistration} />
+            </div>
+            <div className="mt-4 text-center">
+              <p className="text-sm text-white/60 mb-2">Participant can take a photo of this QR code</p>
+              <Button
+                onClick={() => setCreatedRegistration(null)}
+                variant="secondary"
+                size="sm"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
 
       <Card className="mb-8">
         <h2 className="font-heading font-semibold mb-3">Lost-ID Lookup</h2>

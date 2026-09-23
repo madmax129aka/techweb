@@ -124,7 +124,19 @@ export default function EventHeroMedia({ videoSrc, imageSrc, alt, scrim = "full"
           preload="auto"
           onError={() => setVideoFailed(true)}
           className="absolute inset-0 w-full h-full object-cover"
-          style={videoBlur ? { filter: "blur(3px) brightness(0.55)" } : undefined}
+          style={{
+            ...(videoBlur ? { filter: "blur(3px) brightness(0.55)" } : {}),
+            // BUG FIX (mobile responsiveness): Explicitly constrain video
+            // to viewport bounds on all screen sizes. The existing Tailwind
+            // classes (w-full h-full) should handle this, but some mobile
+            // browsers don't respect percentage-based sizing on video
+            // elements within absolute-positioned containers. Setting
+            // explicit maxWidth/maxHeight ensures the video never exceeds
+            // viewport dimensions, preventing horizontal scroll or
+            // desktop-width rendering on mobile devices.
+            maxWidth: "100vw",
+            maxHeight: "100vh",
+          }}
         />
       )}
 

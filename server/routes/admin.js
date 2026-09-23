@@ -2,6 +2,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const prisma = require("../db");
 const { requireAuth, requireRole } = require("../middleware/auth");
+const { exportLimiter } = require("../middleware/rateLimiter");
 const { toCsv } = require("../utils/csv");
 
 const router = express.Router();
@@ -183,8 +184,8 @@ router.delete("/accounts/:id", async (req, res) => {
   }
 });
 
-/** GET /api/admin/export/registrations.csv - full data export. */
-router.get("/export/registrations.csv", async (req, res) => {
+/** GET /api/admin/export/registrations.csv - full data export. Rate limited to prevent abuse. */
+router.get("/export/registrations.csv", exportLimiter, async (req, res) => {
   try {
     const registrations = await prisma.registration.findMany({ include: { user: true } });
     

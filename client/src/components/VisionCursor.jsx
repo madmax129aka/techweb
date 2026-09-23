@@ -119,17 +119,16 @@ export default function VisionCursor() {
       document.removeEventListener("mouseleave", onLeaveWindow);
       cancelAnimationFrame(frame);
     };
-    // isCinematicLogin is a REAL dependency here (not just satisfying the
-    // linter) - VisionCursor is mounted once at the app root (main.jsx),
-    // outside the page-switching area, so navigating between routes via
-    // React Router is a re-render, not a remount. Without this in the
-    // deps array, this effect would only ever check isCinematicLogin
-    // once (on first mount) and never again - so navigating client-side
-    // INTO or OUT OF /login after the initial page load would leave this
-    // cursor stuck in whatever state it started in, instead of actually
-    // toggling to match the current route.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCinematicLogin]);
+    // BUG FIX: Added `visible` to deps array. The effect creates closures
+    // over `visible` state via the `onMove` handler (`if (!visible)
+    // setVisible(true)`). Without `visible` in deps, navigating away from
+    // /login causes cleanup to run with a stale closure, then the effect
+    // re-runs but the NEW onMove handler still references the OLD `visible`
+    // value captured at the previous mount, causing the cursor to
+    // disappear (setVisible never fires because the stale closure thinks
+    // visible is already true). Adding it here ensures fresh closures on
+    // every re-setup.
+  }, [isCinematicLogin, visible]);
 
   if (!enabled) return null;
 

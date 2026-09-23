@@ -56,6 +56,7 @@ const PORTAL_PATH = {
 
 // Primary navigation items (Events will have drill-down)
 const PRIMARY_NAV = [
+  { key: "register", label: "Register", to: "/register" },
   { key: "dashboard", label: "My Dashboard", to: "/status" },
   { key: "help", label: "Help Desk", action: "openPanel:help" },
   { key: "verify", label: "Verify Certificate", to: "/verify-certificate" },

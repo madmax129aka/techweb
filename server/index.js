@@ -23,9 +23,31 @@ const adminRoutes = require("./routes/admin");
 const volunteerRoutes = require("./routes/volunteer");
 const upiRoutes = require("./routes/upi");
 const logRoutes = require("./routes/logs");
+const paymentRoutes = require("./routes/payment");
+const comboRoutes = require("./routes/combos");
 
 const app = express();
 const server = http.createServer(app);
+
+// Security Headers Middleware (manual helmet replacement)
+app.use((req, res, next) => {
+  // Prevent clickjacking
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  
+  // Prevent MIME type sniffing
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  
+  // XSS Protection
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  
+  // Referrer Policy
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  
+  // Permissions Policy
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+  
+  next();
+});
 
 // Allowed CORS origins. In production, set CLIENT_ORIGIN to your deployed
 // frontend URL (comma-separated for multiple). In local dev, Vite starts on
@@ -81,6 +103,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/volunteer", volunteerRoutes);
 app.use("/api/upi", upiRoutes);
 app.use("/api/logs", logRoutes);
+app.use("/api/payment", paymentRoutes);
+app.use("/api/combos", comboRoutes);
 
 // Centralized error handler (e.g. multer file-size/type errors)
 app.use((err, req, res, next) => {

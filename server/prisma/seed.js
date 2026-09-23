@@ -569,6 +569,27 @@ async function main() {
     data: { message: "Venue change: Crypt Clash has moved to Computer Lab 1 (Block C).", createdBy: masterAdmin.id },
   });
 
+  // 6. Combo Pass: 1 Technical + 2 Non-Technical events
+  const comboEvents = [hackNexus, verbalCombat, blitzHunt]; // 1 technical + 2 non-technical
+  const individualPrice = comboEvents.reduce((sum, e) => sum + e.fee, 0); // 300 + 80 + 60 = 440
+  const comboPrice = Math.round(individualPrice * 0.85); // 15% discount = 374
+  const savings = individualPrice - comboPrice; // 66
+
+  await prisma.comboPass.create({
+    data: {
+      name: "Tech & Culture Combo",
+      description: "Build a prototype at Hack Nexus, then compete in sharp debates and crack clues in a campus-wide treasure hunt. Save ₹66 on this power combo.",
+      eventIds: comboEvents.map(e => e.id),
+      individualPrice,
+      comboPrice,
+      savings,
+      category: "mixed",
+      availableSeats: 30,
+      isActive: true,
+    },
+  });
+  console.log(`Created combo pass: Tech & Culture Combo (₹${comboPrice}, saves ₹${savings})`);
+
   console.log("\nSeeding complete.\n");
   console.log("All staff/demo accounts use the password:", DEMO_PASSWORD);
   console.log("See SEED_CREDENTIALS.md at the repo root for the full list of logins.");

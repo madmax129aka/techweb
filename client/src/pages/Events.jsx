@@ -29,7 +29,7 @@ import { fadeUp, fadeIn, staggerContainer, staggerContainerSlow, EASE_CINEMATIC 
  *      radial glow (gold -> crimson -> transparent) sits behind the
  *      logo as a vignette to make it feel like a focal emblem rather
  *      than a nav-bar mark. Below the logo:
- *        - "EIGHT TRACKS. ONE DAY." eyebrow (cinematic uppercase)
+ *        - "EIGHT TRACKS. TWO DAYS." eyebrow (cinematic uppercase)
  *        - single serif tagline
  *        - centered subtext instructions
  *        - three-tab filter (All / Technical / Non-Technical)
@@ -232,7 +232,7 @@ export default function Events() {
             variants={fadeUp}
             className="text-[11px] sm:text-xs tracking-cinematic uppercase text-arc mb-5"
           >
-            Eight Tracks. One Day.
+            Eight Tracks. Two Days.
           </motion.p>
 
           {/* Serif tagline. Light weight, wide leading - editorial, not
@@ -338,7 +338,7 @@ export default function Events() {
             variants={fadeUp}
             className="text-offwhite/55 text-sm sm:text-base leading-relaxed"
           >
-            Eight tracks, curated across a single day. Each event stands on its own - browse the
+            Eight tracks, curated across two days. Each event stands on its own - browse the
             row, then step into any one for the full story.
           </motion.p>
         </motion.div>

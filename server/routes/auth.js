@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const prisma = require("../db");
 const { requireAuth } = require("../middleware/auth");
+const { loginLimiter } = require("../middleware/rateLimiter");
+const { logFailedAuth, logSecurityEvent } = require("../middleware/securityLogger");
 
 const router = express.Router();
 
@@ -10,30 +12,35 @@ const router = express.Router();
  * POST /api/auth/login
  * All roles log in through this single endpoint using email + password.
  * Participants are only allowed to log in once their registration is approved.
+ * Rate limited to prevent brute-force attacks: 5 attempts per 15 minutes per IP+email.
  */
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+      where: { email: normalizedEmail },
       include: { registration: true },
     });
 
     if (!user) {
+      logFailedAuth(req, normalizedEmail, "user_not_found");
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
+      logFailedAuth(req, normalizedEmail, "invalid_password");
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
     if (user.role === "participant") {
       if (!user.registration || user.registration.status !== "approved") {
+        logFailedAuth(req, normalizedEmail, "registration_not_approved");
         return res.status(403).json({
           error: "Your registration is not approved yet. Please check your status page.",
         });
@@ -50,6 +57,15 @@ router.post("/login", async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
     );
+
+    // Log successful login
+    logSecurityEvent("SUCCESSFUL_LOGIN", {
+      ip: req.ip || req.connection.remoteAddress,
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      userAgent: req.headers["user-agent"],
+    });
 
     return res.json({
       token,
